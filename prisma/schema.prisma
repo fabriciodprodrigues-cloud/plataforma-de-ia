@@ -1,0 +1,194 @@
+// Modelagem do MVP. Nomes de tabela/coluna em português (snake_case) para bater
+// com a especificação do projeto; os nomes no código TypeScript ficam em camelCase.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// No Prisma 7 a URL de conexão não fica mais aqui — ela vive no prisma.config.ts
+// (para os comandos de migração) e no adapter do PrismaClient (para a aplicação).
+datasource db {
+  provider = "postgresql"
+}
+
+enum Plataforma {
+  INSTAGRAM
+  YOUTUBE
+  TIKTOK
+  LINKEDIN
+}
+
+enum TipoConteudo {
+  PUBLICACAO // legenda de post (Instagram, LinkedIn)
+  ROTEIRO_VIDEO // script de vídeo (YouTube, TikTok)
+}
+
+enum StatusIdeia {
+  SUGERIDO
+  FAVORITO
+  DESCARTADO
+  PERSONALIZADO // tema digitado pelo próprio usuário
+}
+
+enum FormatoArte {
+  POST // 4:5  — Instagram / LinkedIn
+  THUMBNAIL // 16:9 — YouTube
+  CAPA_VERTICAL // 9:16 — TikTok
+}
+
+/// Espelho local do usuário do Supabase Auth.
+/// O `id` é o mesmo uuid de `auth.users` — a senha nunca passa por aqui,
+/// quem cuida disso é o Supabase.
+model User {
+  id                  String   @id @db.Uuid
+  email               String   @unique
+  nome                String?
+  onboardingConcluido Boolean  @default(false) @map("onboarding_concluido")
+  criadoEm            DateTime @default(now()) @map("criado_em")
+
+  brandKit            BrandKit?
+  niches              Niche[]
+  platformPreferences PlatformPreference[]
+  generatedArtes      GeneratedArte[]
+
+  @@map("users")
+}
+
+model BrandKit {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @unique @map("user_id") @db.Uuid
+  nomeMarca      String   @map("nome_marca")
+  logoUrl        String?  @map("logo_url")
+  corPrimaria    String   @map("cor_primaria") // hex, ex: "#1F5A4A"
+  corSecundaria  String?  @map("cor_secundaria")
+  coresExtraidas String[] @map("cores_extraidas") // paleta lida do logo via Canvas
+  fonte          String   @default("Inter")
+  atualizadoEm   DateTime @updatedAt @map("atualizado_em")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("brand_kits")
+}
+
+model Niche {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  nome      String
+  descricao String?
+  criadoEm  DateTime @default(now()) @map("criado_em")
+
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  researches NicheResearch[]
+  ideas     ContentIdea[]
+
+  @@index([userId])
+  @@map("niches")
+}
+
+/// Cache das pesquisas feitas com a tool `web_search` da Claude API.
+/// Evita repetir (e pagar) a mesma pesquisa toda vez que o usuário abre o painel.
+model NicheResearch {
+  id         String   @id @default(uuid()) @db.Uuid
+  nicheId    String   @map("niche_id") @db.Uuid
+  termo      String? // nulo = pesquisa geral do nicho; preenchido = tema específico
+  resumo     String   @db.Text
+  fontes     Json     @default("[]") // [{ titulo, url }]
+  coletadoEm DateTime @default(now()) @map("coletado_em")
+
+  niche Niche @relation(fields: [nicheId], references: [id], onDelete: Cascade)
+
+  @@index([nicheId, coletadoEm])
+  @@map("niche_research")
+}
+
+model PlatformPreference {
+  id               String     @id @default(uuid()) @db.Uuid
+  userId           String     @map("user_id") @db.Uuid
+  plataforma       Plataforma
+  formatoPreferido String?    @map("formato_preferido")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, plataforma])
+  @@map("platform_preferences")
+}
+
+model ContentIdea {
+  id            String      @id @default(uuid()) @db.Uuid
+  nicheId       String      @map("niche_id") @db.Uuid
+  titulo        String
+  justificativa String?     @db.Text
+  status        StatusIdeia @default(SUGERIDO)
+  criadoEm      DateTime    @default(now()) @map("criado_em")
+
+  niche   Niche    @relation(fields: [nicheId], references: [id], onDelete: Cascade)
+  scripts Script[]
+
+  @@index([nicheId, status])
+  @@map("content_ideas")
+}
+
+/// Um registro por plataforma, todos ligados ao mesmo tema (ContentIdea).
+/// É isso que garante que o conteúdo de uma plataforma não vaze para outra.
+model Script {
+  id              String       @id @default(uuid()) @db.Uuid
+  ideaId          String       @map("idea_id") @db.Uuid
+  plataforma      Plataforma
+  tipo            TipoConteudo
+  conteudo        String       @db.Text
+  // Em segundos para cobrir TikTok (15/30/60s) e YouTube (60/180/300/600s).
+  // Nulo quando o conteúdo é uma legenda de post.
+  duracaoSegundos Int?         @map("duracao_segundos")
+  versao          Int          @default(1)
+  editadoPeloUsuario Boolean   @default(false) @map("editado_pelo_usuario")
+  criadoEm        DateTime     @default(now()) @map("criado_em")
+  atualizadoEm    DateTime     @updatedAt @map("atualizado_em")
+
+  idea ContentIdea    @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  arte GeneratedArte?
+  seo  SeoMetadata?
+
+  @@unique([ideaId, plataforma])
+  @@map("scripts")
+}
+
+model GeneratedArte {
+  id           String      @id @default(uuid()) @db.Uuid
+  userId       String      @map("user_id") @db.Uuid
+  scriptId     String      @unique @map("script_id") @db.Uuid
+  plataforma   Plataforma
+  formato      FormatoArte
+  templateSvg  String      @db.Text @map("template_svg")
+  /// Frase estampada na arte — curta, diferente do título do SEO.
+  textoArte    String?     @map("texto_arte")
+  /// "solido" (cor da marca) ou "foto" (banco de imagens / foto própria).
+  fundo        String      @default("solido")
+  /// Palavras-chave sugeridas pela IA para buscar a foto de fundo.
+  termoFoto    String?     @map("termo_foto")
+  fotoFundoUrl String?     @map("foto_fundo_url")
+  fotoCredito  String?     @map("foto_credito") // atribuição do Pexels
+  urlFinalPng  String?     @map("url_final_png")
+  criadoEm     DateTime    @default(now()) @map("criado_em")
+  atualizadoEm DateTime    @updatedAt @map("atualizado_em")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  script Script @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+
+  @@map("generated_artes")
+}
+
+model SeoMetadata {
+  id              String     @id @default(uuid()) @db.Uuid
+  scriptId        String     @unique @map("script_id") @db.Uuid
+  plataforma      Plataforma
+  titulo          String
+  descricao       String     @db.Text
+  tagsOuHashtags  String[]   @map("tags_ou_hashtags")
+  criadoEm        DateTime   @default(now()) @map("criado_em")
+  atualizadoEm    DateTime   @updatedAt @map("atualizado_em")
+
+  script Script @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+
+  @@map("seo_metadata")
+}

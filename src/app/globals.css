@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  /* Paleta da própria plataforma (não confundir com a paleta da marca do usuário,
+     que é extraída do logo dele e fica no brand_kit). */
+  --color-marca-50: #f3f1ff;
+  --color-marca-100: #e9e5ff;
+  --color-marca-200: #d5cdff;
+  --color-marca-300: #b7a8ff;
+  --color-marca-400: #9478ff;
+  --color-marca-500: #6d4aff;
+  --color-marca-600: #5b2ff5;
+  --color-marca-700: #4c1fdb;
+  --color-marca-800: #401bb3;
+  --color-marca-900: #361a8f;
+
+  --color-realce-400: #ff8a6b;
+  --color-realce-500: #ff6b4a;
+  --color-realce-600: #ed4f2c;
+
+  --color-tinta-400: #8b8b9b;
+  --color-tinta-500: #6b6b7d;
+  --color-tinta-700: #3d3d4d;
+  --color-tinta-900: #1a1a24;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-xl2: 1.25rem;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-[#fbfbfd] text-tinta-900 antialiased;
+  }
+
+  /* Alvos de toque confortáveis no celular. */
+  button,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* O foco precisa ficar visível — parte do público navega por teclado. */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-marca-500;
+  }
+}
+
+@layer components {
+  .campo {
+    @apply w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-base
+           text-tinta-900 placeholder:text-tinta-400 shadow-sm transition
+           focus:border-marca-500 focus:ring-4 focus:ring-marca-500/15 focus:outline-none
+           disabled:cursor-not-allowed disabled:bg-black/5;
+  }
+
+  .rotulo {
+    @apply mb-2 block text-sm font-medium text-tinta-700;
+  }
+
+  .cartao {
+    @apply rounded-2xl border border-black/5 bg-white shadow-[0_1px_3px_rgba(16,16,32,0.06)];
+  }
+}
+
+/* Respeita quem pediu menos animação no sistema. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
