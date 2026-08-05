@@ -52,25 +52,39 @@ export async function entrarAction(
 
   let destino = "/painel";
   try {
+    console.log("[entrar] iniciando login para", dados.data.email);
     const supabase = await criarClienteServidor();
+    console.log("[entrar] cliente Supabase criado");
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email: dados.data.email,
       password: dados.data.senha,
     });
-    if (error) return { erro: traduzirErro(error.message) };
+
+    console.log("[entrar] resposta auth:", { hasData: !!data, hasError: !!error });
+    if (error) {
+      console.error("[entrar] erro auth:", error.message);
+      return { erro: traduzirErro(error.message) };
+    }
 
     if (data.user) {
+      console.log("[entrar] garantindo usuário local para", data.user.id);
       await garantirUsuarioLocal({
         id: data.user.id,
         email: data.user.email ?? dados.data.email,
         nome: (data.user.user_metadata?.nome as string | undefined) ?? null,
       });
+      console.log("[entrar] usuário local garantido");
     }
 
     const proximo = formData.get("proximo");
     if (typeof proximo === "string" && proximo.startsWith("/")) destino = proximo;
   } catch (erro) {
-    console.error("[entrar]", erro);
+    console.error("[entrar] ERRO CAPTURADO:", erro);
+    if (erro instanceof Error) {
+      console.error("[entrar] stack:", erro.stack);
+      console.error("[entrar] message:", erro.message);
+    }
     return {
       erro:
         erro instanceof Error && erro.message.includes(".env")
