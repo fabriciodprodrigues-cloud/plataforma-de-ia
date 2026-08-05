@@ -48,16 +48,29 @@ export async function exigirUsuario() {
     nome: (authUser.user_metadata?.nome as string | undefined) ?? null,
   });
 
-  const usuario = await prisma.user.findUniqueOrThrow({
-    where: { id: authUser.id },
-    include: {
-      brandKit: true,
-      platformPreferences: true,
-      niches: { orderBy: { criadoEm: "asc" }, take: 1 },
-    },
-  });
-
-  return usuario;
+  try {
+    const usuario = await prisma.user.findUniqueOrThrow({
+      where: { id: authUser.id },
+      include: {
+        brandKit: true,
+        platformPreferences: true,
+        niches: { orderBy: { criadoEm: "asc" }, take: 1 },
+      },
+    });
+    return usuario;
+  } catch (erro) {
+    console.error("[auth] erro ao buscar usuário:", erro);
+    const usuarioBasico = await prisma.user.findUnique({
+      where: { id: authUser.id },
+    });
+    if (!usuarioBasico) redirect("/entrar");
+    return {
+      ...usuarioBasico,
+      brandKit: null,
+      platformPreferences: [],
+      niches: [],
+    };
+  }
 }
 
 export type UsuarioCompleto = Awaited<ReturnType<typeof exigirUsuario>>;
