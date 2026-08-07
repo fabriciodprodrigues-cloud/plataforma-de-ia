@@ -8,12 +8,20 @@ import { Alerta } from "@/components/ui/alerta";
 import { Botao } from "@/components/ui/botao";
 import { Campo } from "@/components/ui/campo";
 import { IconePlataforma } from "@/components/icone-plataforma";
-import type { Plataforma } from "@/generated/prisma/enums";
+import type { Arquetipo, Plataforma } from "@/generated/prisma/enums";
+import {
+  ARQUETIPOS,
+  PERGUNTA_ARQUETIPO,
+  PERGUNTA_MOTIVACAO,
+  QUIZ_ARQUETIPO,
+  QUIZ_MOTIVACAO,
+  type Motivacao,
+} from "@/lib/arquetipos";
 import { FONTES, ORDEM_PLATAFORMAS, PLATAFORMAS, fonteCss } from "@/lib/constants";
 import { corDeTextoSobre, ehHexValido, extrairPaleta } from "@/lib/cores";
 import { cn } from "@/lib/utils";
 
-const TOTAL_PASSOS = 3;
+const TOTAL_PASSOS = 4;
 
 const EXEMPLOS_NICHO = [
   "Confeitaria artesanal",
@@ -49,6 +57,12 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
   const [corPrimaria, setCorPrimaria] = useState(PALETA_PADRAO[0]);
   const [fonte, setFonte] = useState<string>(FONTES[0].id);
   const inputArquivo = useRef<HTMLInputElement>(null);
+
+  // Passo 4 — o quiz tem duas perguntas dentro do mesmo passo: a primeira acha a
+  // motivação, a segunda o arquétipo dentro dela. Guardamos qual está na tela
+  // para o botão "Voltar" recuar uma pergunta antes de voltar um passo.
+  const [perguntaQuiz, setPerguntaQuiz] = useState<1 | 2>(1);
+  const [motivacao, setMotivacao] = useState<Motivacao | null>(null);
 
   function alternarPlataforma(p: Plataforma) {
     setErro(null);
@@ -118,10 +132,18 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
     if (passo === 2 && plataformas.length === 0) {
       return setErro("Escolha pelo menos uma rede social para a gente criar o conteúdo.");
     }
+    if (passo === 3 && !ehHexValido(corPrimaria)) {
+      return setErro("Escolha uma cor válida para a marca.");
+    }
     setPasso((p) => Math.min(TOTAL_PASSOS, p + 1));
   }
 
-  function finalizar() {
+  /**
+   * Fecha o cadastro. Recebe o arquétipo por parâmetro em vez de ler do estado
+   * porque quem chama é o clique na última opção do quiz — nesse instante o
+   * `setState` ainda não foi aplicado.
+   */
+  function finalizar(arquetipoEscolhido: Arquetipo) {
     setErro(null);
     if (!ehHexValido(corPrimaria)) return setErro("Escolha uma cor válida para a marca.");
 
@@ -134,6 +156,7 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
         corPrimaria,
         coresExtraidas: coresDoLogo,
         fonte,
+        arquetipo: arquetipoEscolhido,
       });
 
       if (!resultado.ok) {
@@ -159,6 +182,7 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
             {passo === 1 && "Sobre você"}
             {passo === 2 && "Onde você publica"}
             {passo === 3 && "Sua identidade visual"}
+            {passo === 4 && "Seu jeito de falar"}
           </span>
         </div>
         <div
@@ -480,14 +504,78 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
         </section>
       )}
 
+      {passo === 4 && (
+        <section>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {perguntaQuiz === 1 ? PERGUNTA_MOTIVACAO : PERGUNTA_ARQUETIPO}
+          </h1>
+          <p className="mt-2 text-tinta-500">
+            {perguntaQuiz === 1
+              ? "Não existe resposta certa. Isso define o tom de voz que a gente vai usar nos seus textos."
+              : "Última pergunta — é ela que ajusta o jeito de abrir e de encerrar seus conteúdos."}
+          </p>
+
+          <div className="mt-7 flex flex-col gap-3">
+            {perguntaQuiz === 1
+              ? QUIZ_MOTIVACAO.map((opcao) => (
+                  <button
+                    key={opcao.motivacao}
+                    type="button"
+                    disabled={salvando}
+                    onClick={() => {
+                      setMotivacao(opcao.motivacao);
+                      setPerguntaQuiz(2);
+                    }}
+                    className="rounded-2xl border border-black/10 bg-white p-4 text-left transition hover:border-marca-500 hover:bg-marca-50 disabled:opacity-60"
+                  >
+                    <span className="block font-medium text-tinta-700">{opcao.texto}</span>
+                  </button>
+                ))
+              : motivacao &&
+                QUIZ_ARQUETIPO[motivacao].map((opcao) => {
+                  const info = ARQUETIPOS[opcao.arquetipo];
+                  return (
+                    <button
+                      key={opcao.arquetipo}
+                      type="button"
+                      disabled={salvando}
+                      onClick={() => finalizar(opcao.arquetipo)}
+                      className="rounded-2xl border border-black/10 bg-white p-4 text-left transition hover:border-marca-500 hover:bg-marca-50 disabled:opacity-60"
+                    >
+                      <span className="block font-medium text-tinta-700">{opcao.texto}</span>
+                      {/* O nome do arquétipo aparece discreto: quem se importa
+                          entende a estratégia, quem não se importa só lê a frase. */}
+                      <span className="mt-1 block text-sm text-tinta-400">
+                        Perfil {info.nome} · tom {info.tom}
+                      </span>
+                    </button>
+                  );
+                })}
+          </div>
+
+          {salvando && (
+            <p className="mt-5 flex items-center justify-center gap-2 text-sm text-tinta-500">
+              <LoaderCircle className="size-4 animate-spin" aria-hidden />
+              Preparando tudo pra você...
+            </p>
+          )}
+        </section>
+      )}
+
       {/* --- Navegação --- */}
       <div className="mt-8 flex items-center gap-3">
         {passo > 1 && (
           <Botao
             variante="secundario"
             tamanho="grande"
+            larguraTotal={passo === TOTAL_PASSOS}
             onClick={() => {
               setErro(null);
+              // Dentro do quiz, voltar recua uma pergunta antes de recuar o passo.
+              if (passo === 4 && perguntaQuiz === 2) {
+                setPerguntaQuiz(1);
+                return;
+              }
               setPasso((p) => p - 1);
             }}
             disabled={salvando}
@@ -497,20 +585,16 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
           </Botao>
         )}
 
-        {passo < TOTAL_PASSOS ? (
-          <Botao tamanho="grande" larguraTotal onClick={avancar}>
-            Continuar
-            <ArrowRight className="size-4" aria-hidden />
-          </Botao>
-        ) : (
+        {/* No passo 4 não existe botão de avançar: escolher a opção já é a ação. */}
+        {passo < TOTAL_PASSOS && (
           <Botao
             tamanho="grande"
             larguraTotal
-            onClick={finalizar}
-            carregando={salvando || enviandoLogo}
-            textoCarregando={enviandoLogo ? "Enviando logo..." : "Preparando tudo..."}
+            onClick={avancar}
+            carregando={passo === 3 && enviandoLogo}
+            textoCarregando="Enviando logo..."
           >
-            Concluir e ver meus temas
+            Continuar
             <ArrowRight className="size-4" aria-hidden />
           </Botao>
         )}

@@ -37,6 +37,43 @@ enum FormatoArte {
   CAPA_VERTICAL // 9:16 — TikTok
 }
 
+/// Os 12 arquétipos de marca de Mark & Pearson (*The Hero and the Outlaw*),
+/// agrupados em 4 motivações. O quiz do onboarding descobre primeiro a
+/// motivação e depois o arquétipo dentro dela — por isso a ordem aqui segue
+/// os grupos, e não o alfabeto.
+enum Arquetipo {
+  // Independência
+  INOCENTE
+  EXPLORADOR
+  SABIO
+  // Domínio
+  HEROI
+  FORA_DA_LEI
+  MAGO
+  // Pertencimento
+  CARA_COMUM
+  BOBO_DA_CORTE
+  AMANTE
+  // Estabilidade
+  CUIDADOR
+  GOVERNANTE
+  CRIADOR
+}
+
+/// Gatilho mental usado na abertura e no CTA do conteúdo.
+/// Cada arquétipo tem um gatilho "natural" (ver ARQUETIPOS em src/lib/arquetipos.ts),
+/// mas o usuário pode sobrescrever — daí o campo existir separado do arquétipo.
+enum GatilhoMental {
+  NOVIDADE
+  CURIOSIDADE
+  AUTORIDADE
+  DESAFIO
+  EXCLUSIVIDADE
+  ANTECIPACAO
+  PROVA_SOCIAL
+  RECIPROCIDADE
+}
+
 /// Espelho local do usuário do Supabase Auth.
 /// O `id` é o mesmo uuid de `auth.users` — a senha nunca passa por aqui,
 /// quem cuida disso é o Supabase.
@@ -64,6 +101,14 @@ model BrandKit {
   corSecundaria  String?  @map("cor_secundaria")
   coresExtraidas String[] @map("cores_extraidas") // paleta lida do logo via Canvas
   fonte          String   @default("Inter")
+
+  // Anuláveis de propósito: as contas criadas antes do quiz existir continuam
+  // válidas e a interface convida essas pessoas a responder quando entrarem.
+  arquetipo        Arquetipo?     @map("arquetipo")
+  // Derivado do arquétipo no momento do quiz, mas guardado separado porque o
+  // usuário pode trocar o gatilho sem trocar o arquétipo.
+  gatilhoPreferido GatilhoMental? @map("gatilho_preferido")
+
   atualizadoEm   DateTime @updatedAt @map("atualizado_em")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -140,6 +185,10 @@ model Script {
   // Em segundos para cobrir TikTok (15/30/60s) e YouTube (60/180/300/600s).
   // Nulo quando o conteúdo é uma legenda de post.
   duracaoSegundos Int?         @map("duracao_segundos")
+  // Registrado no momento da geração: se o usuário trocar de arquétipo depois,
+  // o selo do roteiro antigo continua contando a verdade sobre como ele nasceu.
+  gatilhoUsado    GatilhoMental? @map("gatilho_usado")
+  arquetipoUsado  Arquetipo?     @map("arquetipo_usado")
   versao          Int          @default(1)
   editadoPeloUsuario Boolean   @default(false) @map("editado_pelo_usuario")
   criadoEm        DateTime     @default(now()) @map("criado_em")
