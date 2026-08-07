@@ -34,7 +34,14 @@ async function contextoIdeia(ideaId: string) {
     usuario.platformPreferences.map((p) => p.plataforma),
   );
 
-  return { usuario, ideia, marca, plataformas };
+  // Fora de `marca` de propósito: `DadosMarca` é o que a arte consome (cor,
+  // fonte, logo). O arquétipo é assunto do texto, não do desenho.
+  const voz = {
+    arquetipo: usuario.brandKit?.arquetipo ?? null,
+    gatilho: usuario.brandKit?.gatilhoPreferido ?? null,
+  };
+
+  return { usuario, ideia, marca, voz, plataformas };
 }
 
 /** A pesquisa que embasa o conteúdo: do tema, se for personalizado; do nicho, se não. */
@@ -67,7 +74,7 @@ export async function gerarConteudos(
   ideaId: string,
 ): Promise<Resultado<{ falhas: string[] }>> {
   try {
-    const { usuario, ideia, marca, plataformas } = await contextoIdeia(ideaId);
+    const { usuario, ideia, marca, voz, plataformas } = await contextoIdeia(ideaId);
 
     if (plataformas.length === 0) {
       return {
@@ -103,6 +110,8 @@ export async function gerarConteudos(
           pesquisa,
           nicho: ideia.niche.nome,
           nomeMarca: marca.nomeMarca,
+          arquetipo: voz.arquetipo,
+          gatilho: voz.gatilho,
         });
 
         const svg = gerarSvgDaArte({
@@ -119,6 +128,8 @@ export async function gerarConteudos(
             tipo: meta.tipoConteudo,
             conteudo: gerado.conteudo,
             duracaoSegundos,
+            arquetipoUsado: gerado.arquetipoUsado,
+            gatilhoUsado: gerado.gatilhoUsado,
             seo: {
               create: {
                 plataforma,
@@ -174,7 +185,7 @@ export async function regerarConteudo(params: {
   duracaoSegundos: number | null;
 }): Promise<Resultado<{ conteudo: string }>> {
   try {
-    const { ideia, marca } = await contextoIdeia(params.ideaId);
+    const { ideia, marca, voz } = await contextoIdeia(params.ideaId);
 
     const script = await prisma.script.findUnique({
       where: { ideaId_plataforma: { ideaId: ideia.id, plataforma: params.plataforma } },
@@ -197,6 +208,8 @@ export async function regerarConteudo(params: {
       pesquisa,
       nicho: ideia.niche.nome,
       nomeMarca: marca.nomeMarca,
+      arquetipo: voz.arquetipo,
+      gatilho: voz.gatilho,
     });
 
     await prisma.script.update({
@@ -204,6 +217,8 @@ export async function regerarConteudo(params: {
       data: {
         conteudo: gerado.conteudo,
         duracaoSegundos: params.duracaoSegundos,
+        arquetipoUsado: gerado.arquetipoUsado,
+        gatilhoUsado: gerado.gatilhoUsado,
         versao: { increment: 1 },
         editadoPeloUsuario: false,
       },

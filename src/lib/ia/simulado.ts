@@ -1,4 +1,5 @@
-import type { Plataforma } from "@/generated/prisma/enums";
+import type { Arquetipo, Plataforma } from "@/generated/prisma/enums";
+import { ARQUETIPOS, aberturaNoTom, ctaNoTom } from "@/lib/arquetipos";
 import type { ConteudoGerado } from "./conteudo";
 import type { ResultadoPesquisa } from "./pesquisa";
 import type { TemaSugerido } from "./temas";
@@ -169,15 +170,27 @@ const FRASES = [
   "E tem um detalhe que quase ninguém comenta sobre isso.",
 ];
 
-/** Repete e varia frases até o texto chegar perto da meta de palavras. */
-function preencherAte(inicio: string, alvoPalavras: number, aleatorio: () => number) {
+/**
+ * Repete e varia frases até o texto chegar perto da meta de palavras.
+ *
+ * `fim` fica de fora do preenchimento e é colado depois. Sem isso o enchimento
+ * cai atrás do CTA e da assinatura, e o post termina no meio de uma frase solta
+ * — justamente a parte que o arquétipo personaliza.
+ */
+function preencherAte(
+  inicio: string,
+  alvoPalavras: number,
+  aleatorio: () => number,
+  fim = "",
+) {
   let texto = inicio;
   let tentativas = 0;
-  while (contarPalavras(texto) < alvoPalavras && tentativas < 200) {
+  const alvoCorpo = alvoPalavras - contarPalavras(fim);
+  while (contarPalavras(texto) < alvoCorpo && tentativas < 200) {
     texto += " " + FRASES[Math.floor(aleatorio() * FRASES.length)];
     tentativas++;
   }
-  return texto;
+  return fim ? `${texto}\n\n${fim}` : texto;
 }
 
 function palavrasParaDuracao(plataforma: Plataforma, segundos: number) {
@@ -197,14 +210,25 @@ function pontosParaDuracao(segundos: number) {
 function legenda(params: {
   plataforma: "INSTAGRAM" | "LINKEDIN";
   tema: string;
+  nicho: string;
   nomeMarca: string;
+  arquetipo: Arquetipo | null;
   aleatorio: () => number;
 }): string {
-  const { plataforma, tema, nomeMarca, aleatorio } = params;
+  const { plataforma, tema, nicho, nomeMarca, arquetipo, aleatorio } = params;
+
+  // Com arquétipo, a abertura e o fecho mudam de voz; sem ele, cai no texto
+  // neutro de antes.
+  const abertura = arquetipo
+    ? aberturaNoTom(arquetipo, tema, nicho)
+    : "Ninguém te avisa disso quando você começa.";
+  const fecho = arquetipo
+    ? ctaNoTom(arquetipo)
+    : "Salva esse post pra lembrar quando bater a dúvida. E me conta nos comentários: qual desses três você já viveu?";
 
   if (plataforma === "INSTAGRAM") {
     return preencherAte(
-      `Ninguém te avisa disso quando você começa.
+      `${abertura}
 
 ${tema} parece uma coisa quando você olha de fora, e é outra bem diferente quando você põe a mão.
 
@@ -212,18 +236,17 @@ O que eu faria diferente se voltasse ao começo:
 
 • Começaria com menos coisa e mais constância
 • Perguntaria antes de investir, não depois
-• Não copiaria o que estava dando certo pros outros sem entender o porquê
-
-Salva esse post pra lembrar quando bater a dúvida. E me conta nos comentários: qual desses três você já viveu?
-
-— ${nomeMarca}`,
+• Não copiaria o que estava dando certo pros outros sem entender o porquê`,
       150,
       aleatorio,
+      `${fecho}\n\n— ${nomeMarca}`,
     );
   }
 
   return preencherAte(
-    `Levei mais tempo do que gostaria para entender uma coisa sobre ${tema}.
+    `${abertura}
+
+Levei mais tempo do que gostaria para entender uma coisa sobre ${tema}.
 
 No começo, eu achava que o problema era falta de recurso. Não era.
 
@@ -235,21 +258,22 @@ Três aprendizados que eu levo comigo até hoje:
 2. Perguntar cedo economiza meses de retrabalho.
 3. O que funciona para os outros nem sempre serve para o seu contexto — entender o porquê importa mais do que copiar o formato.
 
-Hoje eu olho para trás e vejo que quase todo erro que cometi veio de pressa.
-
-E você, o que faria diferente se pudesse recomeçar?`,
+Hoje eu olho para trás e vejo que quase todo erro que cometi veio de pressa.`,
     230,
     aleatorio,
+    fecho,
   );
 }
 
 function roteiro(params: {
   plataforma: "YOUTUBE" | "TIKTOK";
   tema: string;
+  nicho: string;
   duracaoSegundos: number;
+  arquetipo: Arquetipo | null;
   aleatorio: () => number;
 }): string {
-  const { plataforma, tema, duracaoSegundos, aleatorio } = params;
+  const { plataforma, tema, nicho, duracaoSegundos, arquetipo, aleatorio } = params;
 
   const alvo = palavrasParaDuracao(plataforma, duracaoSegundos);
   const pontos = pontosParaDuracao(duracaoSegundos);
@@ -265,15 +289,25 @@ function roteiro(params: {
   ];
 
   // O gancho e o CTA são curtos; o miolo é o que cresce com a duração.
-  const gancho =
-    plataforma === "TIKTOK"
-      ? `GANCHO (0-3s)\nPara tudo: se você faz isso em ${tema}, está perdendo tempo.`
-      : `GANCHO (0-15s)\nSe você já tentou ${tema} e não deu certo, provavelmente não foi falta de esforço. Nesse vídeo eu te mostro o que costuma estar por trás disso — e o que fazer no lugar.`;
+  const rotuloGancho = plataforma === "TIKTOK" ? "GANCHO (0-3s)" : "GANCHO (0-15s)";
 
-  const cta =
-    plataforma === "TIKTOK"
-      ? `CTA\nSegue aqui que amanhã eu mostro a parte 2.`
-      : `CTA\nSe esse vídeo te ajudou, se inscreve no canal — toda semana tem conteúdo novo sobre isso. E me conta nos comentários qual desses pontos você já tinha percebido.`;
+  const textoGancho = arquetipo
+    ? aberturaNoTom(arquetipo, tema, nicho)
+    : plataforma === "TIKTOK"
+      ? `Para tudo: se você faz isso em ${tema}, está perdendo tempo.`
+      : `Se você já tentou ${tema} e não deu certo, provavelmente não foi falta de esforço. Nesse vídeo eu te mostro o que costuma estar por trás disso — e o que fazer no lugar.`;
+
+  const gancho = `${rotuloGancho}\n${textoGancho}`;
+
+  const fechoRede =
+    plataforma === "TIKTOK" ? "Segue pra mais." : `Se inscreve no canal pra mais sobre ${nicho}.`;
+  const textoCta = arquetipo
+    ? `${ctaNoTom(arquetipo)} ${fechoRede}`
+    : plataforma === "TIKTOK"
+      ? "Segue aqui que amanhã eu mostro a parte 2."
+      : "Se esse vídeo te ajudou, se inscreve no canal — toda semana tem conteúdo novo sobre isso. E me conta nos comentários qual desses pontos você já tinha percebido.";
+
+  const cta = `CTA\n${textoCta}`;
 
   const orcamentoMiolo = Math.max(20, alvo - contarPalavras(gancho) - contarPalavras(cta));
   const porPonto = Math.round(orcamentoMiolo / pontos);
@@ -362,23 +396,29 @@ export async function conteudoSimulado(params: {
   tema: string;
   nicho: string;
   nomeMarca: string;
+  arquetipo?: Arquetipo | null;
 }): Promise<ConteudoGerado> {
   await esperaSimulada(1600);
 
   const aleatorio = semente(params.tema + params.plataforma + params.duracaoSegundos);
+  const arquetipo = params.arquetipo ?? null;
 
   const conteudo =
     params.plataforma === "YOUTUBE" || params.plataforma === "TIKTOK"
       ? roteiro({
           plataforma: params.plataforma,
           tema: params.tema,
+          nicho: params.nicho,
           duracaoSegundos: params.duracaoSegundos ?? 180,
+          arquetipo,
           aleatorio,
         })
       : legenda({
           plataforma: params.plataforma,
           tema: params.tema,
+          nicho: params.nicho,
           nomeMarca: params.nomeMarca,
+          arquetipo,
           aleatorio,
         });
 
@@ -397,5 +437,7 @@ export async function conteudoSimulado(params: {
     }),
     textoArte,
     buscaFoto: buscaFotoPara(params.nicho),
+    arquetipoUsado: arquetipo,
+    gatilhoUsado: arquetipo ? ARQUETIPOS[arquetipo].gatilho : null,
   };
 }

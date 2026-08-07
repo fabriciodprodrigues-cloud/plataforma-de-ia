@@ -1,4 +1,5 @@
-import type { Plataforma } from "@/generated/prisma/enums";
+import type { Arquetipo, GatilhoMental, Plataforma } from "@/generated/prisma/enums";
+import { ARQUETIPOS, GATILHOS } from "@/lib/arquetipos";
 import { PLATAFORMAS, rotuloDuracao } from "@/lib/constants";
 import { modoDemonstracao } from "@/lib/env";
 import { listaDeTextos, objeto, pedirJson, texto } from "./json";
@@ -16,6 +17,9 @@ export type ConteudoGerado = {
   textoArte: string;
   /** Palavras-chave para buscar a foto de fundo no banco de imagens. */
   buscaFoto: string;
+  /** O que de fato guiou este texto — vai gravado no roteiro e vira o selo. */
+  arquetipoUsado: Arquetipo | null;
+  gatilhoUsado: GatilhoMental | null;
 };
 
 const SISTEMA = `Você escreve conteúdo para redes sociais em português do Brasil.
@@ -27,7 +31,17 @@ Regras que valem sempre:
 - Nada de emoji em excesso: no máximo dois, e só se combinarem com a marca.
 - Não invente números, estudos ou fatos. Se a pesquisa não trouxer um dado, escreva sem ele.
 - Não escreva "como IA" nem comente sobre o próprio processo. Entregue só o conteúdo.
-- Nunca copie texto da pesquisa literalmente; escreva com suas palavras.`;
+- Nunca copie texto da pesquisa literalmente; escreva com suas palavras.
+
+USO ÉTICO DOS GATILHOS MENTAIS — esta regra não tem exceção:
+O gatilho serve para destacar um valor que existe de verdade no conteúdo, nunca para
+fabricar pressão. Está proibido:
+- inventar urgência ("últimas vagas", "só até hoje") quando não há prazo real;
+- inventar escassez ("restam poucos", "vaga limitada") quando não há limite real;
+- prometer resultado garantido, ou sugerir que quem não agir vai ficar para trás;
+- inventar número, depoimento ou credencial para dar peso ao argumento.
+Se o tema não sustentar o gatilho honestamente, escreva sem ele. Um texto morno e
+verdadeiro é melhor que um texto persuasivo e falso.`;
 
 const SCHEMA = objeto(
   {
@@ -61,6 +75,43 @@ function pontosParaDuracao(segundos: number): number {
   if (segundos <= 200) return 4;
   if (segundos <= 330) return 5;
   return 7;
+}
+
+/**
+ * Bloco que traduz o arquétipo do usuário em instrução de escrita.
+ *
+ * Repare que passamos UM gatilho só. A tentação é listar os oito e deixar o
+ * modelo escolher, mas o resultado disso é um texto que tenta usar todos ao
+ * mesmo tempo e soa artificial — que é exatamente o que a personalização
+ * deveria evitar.
+ *
+ * As frases de exemplo importam mais que a descrição do tom: pedir "seja
+ * ousado" produz um texto bem mais genérico do que mostrar uma frase ousada.
+ */
+function blocoPersonalidade(
+  arquetipo: Arquetipo | null | undefined,
+  gatilhoEscolhido: GatilhoMental | null | undefined,
+): string {
+  if (!arquetipo) return "";
+
+  const info = ARQUETIPOS[arquetipo];
+  const gatilho = GATILHOS[gatilhoEscolhido ?? info.gatilho];
+
+  return `
+COMO ESTA MARCA FALA (arquétipo ${info.nome})
+Tom de voz: ${info.tom}.
+
+Gancho de abertura: use o gatilho mental "${gatilho.rotulo}" — ${gatilho.comoUsar}.
+Use esse gatilho e só ele. Não tente encaixar outros gatilhos no mesmo texto.
+Exemplo do jeito de abrir (não copie, é só o tom):
+"${info.aberturaExemplo}"
+
+CTA de fechamento: ${info.estiloCta}, no mesmo gatilho da abertura.
+Exemplo do jeito de fechar (não copie, é só o tom):
+"${info.ctaExemplo}"
+
+O tom acima vale para o texto inteiro, não só para a abertura e o fecho.
+`;
 }
 
 function briefingPorPlataforma(params: {
@@ -168,7 +219,17 @@ export async function gerarConteudoPlataforma(params: {
   pesquisa: string;
   nicho: string;
   nomeMarca: string;
+  /** Nulo para as contas criadas antes do quiz existir. */
+  arquetipo?: Arquetipo | null;
+  /** Sobrescreve o gatilho natural do arquétipo, quando o usuário trocar. */
+  gatilho?: GatilhoMental | null;
 }): Promise<ConteudoGerado> {
+  // O gatilho que de fato foi usado volta junto com o texto para o selo mostrar
+  // a verdade, mesmo que o usuário troque de arquétipo depois.
+  const gatilhoUsado = params.arquetipo
+    ? (params.gatilho ?? ARQUETIPOS[params.arquetipo].gatilho)
+    : null;
+
   if (modoDemonstracao()) {
     return conteudoSimulado({
       plataforma: params.plataforma,
@@ -176,6 +237,7 @@ export async function gerarConteudoPlataforma(params: {
       tema: params.tema,
       nicho: params.nicho,
       nomeMarca: params.nomeMarca,
+      arquetipo: params.arquetipo ?? null,
     });
   }
 
@@ -203,7 +265,7 @@ Pesquisa recente que deve embasar o conteúdo:
 """
 ${params.pesquisa}
 """
-
+${blocoPersonalidade(params.arquetipo, params.gatilho)}
 ${briefingPorPlataforma(params)}`,
     schema: SCHEMA,
     maxTokens,
@@ -219,6 +281,8 @@ ${briefingPorPlataforma(params)}`,
     },
     textoArte: (resultado.textoArte ?? params.tema).trim(),
     buscaFoto: (resultado.buscaFoto ?? params.nicho).trim(),
+    arquetipoUsado: params.arquetipo ?? null,
+    gatilhoUsado,
   };
 }
 

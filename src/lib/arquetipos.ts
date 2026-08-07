@@ -244,6 +244,38 @@ export function infoArquetipo(arquetipo: Arquetipo | null | undefined): InfoArqu
   return arquetipo ? ARQUETIPOS[arquetipo] : null;
 }
 
+/**
+ * Abertura no tom do arquétipo, montada a partir do tema.
+ *
+ * Existe para o modo demonstração: sem isso, quem testa a plataforma sem chave
+ * da IA veria o mesmo texto para os 12 arquétipos e concluiria que a
+ * personalização não funciona. Com a chave ligada quem escreve é o modelo —
+ * estas frases viram só exemplo dentro do prompt.
+ */
+export function aberturaNoTom(arquetipo: Arquetipo, tema: string, nicho: string): string {
+  const t = tema.charAt(0).toLowerCase() + tema.slice(1);
+  const porArquetipo: Record<Arquetipo, string> = {
+    INOCENTE: `${tema} — e a boa notícia é que é mais simples do que parece.`,
+    EXPLORADOR: `Fui atrás de descobrir o que realmente funciona em ${nicho}, e cheguei nisso: ${t}.`,
+    SABIO: `Depois de estudar bastante sobre ${nicho}, acho importante compartilhar isso: ${t}.`,
+    HEROI: `Se você quer se destacar em ${nicho}, precisa encarar isso de frente: ${t}.`,
+    FORA_DA_LEI: `Ninguém vai te contar isso sobre ${nicho}, mas eu vou: ${t}.`,
+    MAGO: `Imagina transformar completamente o resultado do seu trabalho em ${nicho}. É sobre isso: ${t}.`,
+    CARA_COMUM: `Isso aconteceu comigo, e acho que já aconteceu com você também: ${t}.`,
+    BOBO_DA_CORTE: `Ok, bora falar de um jeito leve sobre ${t} — sem drama, só o que interessa.`,
+    AMANTE: `Quero falar de algo que mexe comigo de verdade: ${t}.`,
+    CUIDADOR: `Escrevi isso pensando em quem, como eu, se preocupa de verdade com ${nicho}: ${t}.`,
+    GOVERNANTE: `Se você quer ter controle de verdade sobre ${nicho}, comece por aqui: ${t}.`,
+    CRIADOR: `Construí esse conteúdo com cuidado, porque ${t} merece ser bem explicado.`,
+  };
+  return porArquetipo[arquetipo];
+}
+
+/** CTA no tom do arquétipo. Mesma lógica de `aberturaNoTom`. */
+export function ctaNoTom(arquetipo: Arquetipo): string {
+  return ARQUETIPOS[arquetipo].ctaExemplo;
+}
+
 /** Rótulo pronto para o selo: "Arquétipo Herói · Gancho mental usado: Desafio". */
 export function rotuloSelo(
   arquetipo: Arquetipo | null | undefined,
