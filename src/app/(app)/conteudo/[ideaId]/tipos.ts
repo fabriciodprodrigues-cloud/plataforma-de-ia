@@ -1,4 +1,9 @@
-import type { Plataforma, TipoConteudo } from "@/generated/prisma/enums";
+import type {
+  Arquetipo,
+  GatilhoMental,
+  Plataforma,
+  TipoConteudo,
+} from "@/generated/prisma/enums";
 
 export type DadosSeo = {
   titulo: string;
@@ -20,6 +25,9 @@ export type DadosPlataforma = {
   tipo: TipoConteudo;
   conteudo: string;
   duracaoSegundos: number | null;
+  /** O que guiou este texto quando ele foi escrito — alimenta o selo. */
+  arquetipoUsado: Arquetipo | null;
+  gatilhoUsado: GatilhoMental | null;
   seo: DadosSeo;
   arte: DadosArte;
 };

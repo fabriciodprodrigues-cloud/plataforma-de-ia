@@ -6,6 +6,7 @@ import { regerarConteudo, salvarConteudo } from "./acoes";
 import type { DadosPlataforma } from "./tipos";
 import { Alerta } from "@/components/ui/alerta";
 import { Botao } from "@/components/ui/botao";
+import { GATILHOS, infoArquetipo } from "@/lib/arquetipos";
 import { PLATAFORMAS } from "@/lib/constants";
 import { useAutoSalvar } from "@/lib/hooks/use-auto-salvar";
 import { cn } from "@/lib/utils";
@@ -75,6 +76,11 @@ export function SecaoRoteiro({
 
   const palavras = dados.conteudo.trim().split(/\s+/).filter(Boolean).length;
 
+  // Lido do próprio roteiro, não do brand kit: se o usuário trocar de arquétipo
+  // depois, o selo continua contando como este texto foi escrito de fato.
+  const arqInfo = infoArquetipo(dados.arquetipoUsado);
+  const gatilho = arqInfo ? GATILHOS[dados.gatilhoUsado ?? arqInfo.gatilho] : null;
+
   return (
     <section>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -109,6 +115,29 @@ export function SecaoRoteiro({
           </Botao>
         </div>
       </div>
+
+      {/* Selo de transparência: mostra a estratégia que foi aplicada no texto.
+          Sem isso o usuário não tem como saber por que o conteúdo abre e fecha
+          do jeito que abre — e a personalização vira caixa-preta. */}
+      {arqInfo && gatilho && (
+        <div className="mt-4">
+          <span
+            className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-full bg-marca-50 px-3 py-1.5 text-sm text-marca-700 ring-1 ring-marca-500/15"
+            title={`Tom ${arqInfo.tom}. Gatilho: ${gatilho.comoUsar}.`}
+          >
+            <span aria-hidden>🧠</span>
+            <span>
+              Arquétipo <b className="font-semibold">{arqInfo.nome}</b>
+            </span>
+            <span aria-hidden className="text-marca-700/40">
+              ·
+            </span>
+            <span>
+              Gancho mental usado: <b className="font-semibold">{gatilho.rotulo}</b>
+            </span>
+          </span>
+        </div>
+      )}
 
       {/* Seletor de duração — só existe para vídeo. */}
       {ehVideo && meta.duracoes.length > 0 && (

@@ -51,6 +51,8 @@ export default async function PaginaConteudo({ params }: Props) {
         tipo: script.tipo,
         conteudo: script.conteudo,
         duracaoSegundos: script.duracaoSegundos,
+        arquetipoUsado: script.arquetipoUsado,
+        gatilhoUsado: script.gatilhoUsado,
         seo: {
           titulo: script.seo?.titulo ?? "",
           descricao: script.seo?.descricao ?? "",

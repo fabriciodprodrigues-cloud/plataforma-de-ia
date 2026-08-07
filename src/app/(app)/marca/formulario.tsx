@@ -8,7 +8,8 @@ import { Alerta } from "@/components/ui/alerta";
 import { Botao } from "@/components/ui/botao";
 import { Campo } from "@/components/ui/campo";
 import { IconePlataforma } from "@/components/icone-plataforma";
-import type { Plataforma } from "@/generated/prisma/enums";
+import { SeletorArquetipo } from "@/components/seletor-arquetipo";
+import type { Arquetipo, Plataforma } from "@/generated/prisma/enums";
 import { FONTES, ORDEM_PLATAFORMAS, PLATAFORMAS, fonteCss } from "@/lib/constants";
 import { corDeTextoSobre, ehHexValido, extrairPaleta } from "@/lib/cores";
 import { cn } from "@/lib/utils";
@@ -26,9 +27,11 @@ export function FormularioMarca({
     corPrimaria: string;
     coresExtraidas: string[];
     fonte: string;
+    arquetipo: Arquetipo | null;
   };
 }) {
   const router = useRouter();
+  const [arquetipo, setArquetipo] = useState<Arquetipo | null>(inicial.arquetipo);
   const [nomeMarca, setNomeMarca] = useState(inicial.nomeMarca);
   const [nicho, setNicho] = useState(inicial.nicho);
   const [plataformas, setPlataformas] = useState<Plataforma[]>(inicial.plataformas);
@@ -94,6 +97,7 @@ export function FormularioMarca({
         corPrimaria,
         coresExtraidas: coresDoLogo,
         fonte,
+        arquetipo,
       });
       if (!resultado.ok) return setErro(resultado.erro);
       setSalvo(true);
@@ -120,6 +124,15 @@ export function FormularioMarca({
         dica="Mudar isso altera as pesquisas e os próximos temas sugeridos."
         maxLength={120}
       />
+
+      <div>
+        <span className="rotulo">Seu jeito de falar</span>
+        <SeletorArquetipo valor={arquetipo} aoMudar={setArquetipo} />
+        <p className="mt-2 text-sm text-tinta-400">
+          Define o tom dos textos e o gancho usado na abertura e no fecho. Vale para os
+          próximos conteúdos — os que já existem continuam como estão até você refazer.
+        </p>
+      </div>
 
       <div>
         <span className="rotulo">Onde você publica</span>

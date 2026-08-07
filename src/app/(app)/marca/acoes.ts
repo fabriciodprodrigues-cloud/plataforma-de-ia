@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { Plataforma } from "@/generated/prisma/enums";
+import { Arquetipo, Plataforma } from "@/generated/prisma/enums";
+import { ARQUETIPOS } from "@/lib/arquetipos";
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -16,6 +17,7 @@ const esquema = z.object({
   corPrimaria: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i, "Cor inválida."),
   coresExtraidas: z.array(z.string()).max(8),
   fonte: z.string().min(1),
+  arquetipo: z.enum(Arquetipo).nullable(),
 });
 
 export type DadosMarcaForm = z.input<typeof esquema>;
@@ -31,23 +33,22 @@ export async function salvarMarca(dados: DadosMarcaForm): Promise<Resultado> {
     const usuario = await exigirUsuario();
 
     await prisma.$transaction(async (tx) => {
+      const campos = {
+        nomeMarca: d.nomeMarca,
+        logoUrl: d.logoUrl,
+        corPrimaria: d.corPrimaria.toUpperCase(),
+        coresExtraidas: d.coresExtraidas,
+        fonte: d.fonte,
+        arquetipo: d.arquetipo,
+        // O gatilho acompanha o arquétipo. Quando existir tela para escolher um
+        // gatilho diferente do natural, é aqui que ela vai encostar.
+        gatilhoPreferido: d.arquetipo ? ARQUETIPOS[d.arquetipo].gatilho : null,
+      };
+
       await tx.brandKit.upsert({
         where: { userId: usuario.id },
-        create: {
-          userId: usuario.id,
-          nomeMarca: d.nomeMarca,
-          logoUrl: d.logoUrl,
-          corPrimaria: d.corPrimaria.toUpperCase(),
-          coresExtraidas: d.coresExtraidas,
-          fonte: d.fonte,
-        },
-        update: {
-          nomeMarca: d.nomeMarca,
-          logoUrl: d.logoUrl,
-          corPrimaria: d.corPrimaria.toUpperCase(),
-          coresExtraidas: d.coresExtraidas,
-          fonte: d.fonte,
-        },
+        create: { userId: usuario.id, ...campos },
+        update: campos,
       });
 
       const nicho = usuario.niches[0];

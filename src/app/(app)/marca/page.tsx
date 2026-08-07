@@ -27,6 +27,7 @@ export default async function PaginaMarca() {
             corPrimaria: usuario.brandKit?.corPrimaria ?? "#6D4AFF",
             coresExtraidas: usuario.brandKit?.coresExtraidas ?? [],
             fonte: usuario.brandKit?.fonte ?? "Inter",
+            arquetipo: usuario.brandKit?.arquetipo ?? null,
           }}
         />
       </div>
