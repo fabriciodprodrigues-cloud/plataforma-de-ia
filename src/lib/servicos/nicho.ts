@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { pesquisar } from "@/lib/ia/pesquisa";
+import { pesquisar, type AoProgredir } from "@/lib/ia/pesquisa";
 
 /** Depois disso a pesquisa é considerada velha e refeita. */
 const VALIDADE_DIAS = 7;
@@ -13,6 +13,8 @@ export async function obterPesquisaDoNicho(params: {
   nicheId: string;
   nomeNicho: string;
   forcar?: boolean;
+  /** Repassado para a pesquisa quando a tela quer acompanhar o andamento. */
+  aoProgredir?: AoProgredir;
 }): Promise<string> {
   if (!params.forcar) {
     const limite = new Date(Date.now() - VALIDADE_DIAS * 24 * 60 * 60 * 1000);
@@ -23,7 +25,10 @@ export async function obterPesquisaDoNicho(params: {
     if (recente) return recente.resumo;
   }
 
-  const { resumo, fontes } = await pesquisar({ nicho: params.nomeNicho });
+  const { resumo, fontes } = await pesquisar({
+    nicho: params.nomeNicho,
+    aoProgredir: params.aoProgredir,
+  });
 
   await prisma.nicheResearch.create({
     data: { nicheId: params.nicheId, termo: null, resumo, fontes },

@@ -6,6 +6,29 @@ import { pesquisaSimulada } from "./simulado";
 export type Fonte = { titulo: string; url: string };
 export type ResultadoPesquisa = { resumo: string; fontes: Fonte[] };
 
+/**
+ * Aviso de progresso emitido durante a pesquisa.
+ *
+ * Existe porque a pesquisa real leva perto de três minutos: sem isso a tela fica
+ * parada tempo demais e o usuário conclui que travou — foi exatamente o que
+ * aconteceu no primeiro teste em produção.
+ */
+export type EventoPesquisa =
+  | { tipo: "buscando"; consulta: string; numero: number }
+  | { tipo: "leu"; dominios: string[]; totalFontes: number }
+  | { tipo: "escrevendo" };
+
+export type AoProgredir = (evento: EventoPesquisa) => void;
+
+/** "https://www.contabeis.com.br/noticias/..." vira "contabeis.com.br". */
+function dominio(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
 const SISTEMA = `Você é um pesquisador de conteúdo para redes sociais, brasileiro, e escreve sempre em português do Brasil.
 
 Sua tarefa é descobrir o que está em alta AGORA no nicho informado e resumir de um jeito prático para quem vai criar conteúdo.
@@ -25,6 +48,8 @@ export async function pesquisar(params: {
   nicho: string;
   /** Tema digitado pelo usuário. Sem isso, faz a pesquisa geral do nicho. */
   termo?: string | null;
+  /** Recebe o andamento em tempo real. Opcional — sem ele nada muda. */
+  aoProgredir?: AoProgredir;
 }): Promise<ResultadoPesquisa> {
   if (modoDemonstracao()) return pesquisaSimulada(params.nicho, params.termo);
 
@@ -35,17 +60,72 @@ export async function pesquisar(params: {
   const mensagens: Anthropic.MessageParam[] = [{ role: "user", content: prompt }];
 
   let resposta: Anthropic.Message | null = null;
+  let buscasFeitas = 0;
+  const urlsVistas = new Set<string>(); // só para o aviso de progresso
+  const fontesAchadas: Fonte[] = []; // o que de fato vai ser gravado
+  const urlsDeFontes = new Set<string>();
+  let avisouEscrevendo = false;
 
   // A busca roda no servidor da Anthropic em ciclos. Quando ela atinge o limite de
   // um ciclo, a resposta volta com "pause_turn" e a gente reenvia para continuar.
   for (let tentativa = 0; tentativa < 4; tentativa++) {
-    resposta = await ia().messages.create({
+    // Streaming em vez de create(): é o que permite avisar a tela a cada busca,
+    // em vez de deixar o usuário três minutos olhando para um passo congelado.
+    // De quebra, manter a conexão viva ajuda contra o teto de duração da Vercel.
+    const fluxo = ia().messages.stream({
       model: MODELO,
       max_tokens: 8000,
       system: SISTEMA,
       tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 6 }],
       messages: mensagens,
     });
+
+    if (params.aoProgredir) {
+      fluxo.on("contentBlock", (bloco) => {
+        if (bloco.type === "server_tool_use" && bloco.name === "web_search") {
+          const consulta = (bloco.input as { query?: string })?.query;
+          buscasFeitas += 1;
+          params.aoProgredir!({
+            tipo: "buscando",
+            consulta: consulta ?? "",
+            numero: buscasFeitas,
+          });
+          return;
+        }
+
+        if (bloco.type === "web_search_tool_result" && Array.isArray(bloco.content)) {
+          const novos: string[] = [];
+          for (const item of bloco.content) {
+            if (item.type !== "web_search_result" || urlsVistas.has(item.url)) continue;
+            urlsVistas.add(item.url);
+            novos.push(dominio(item.url));
+          }
+          if (novos.length > 0) {
+            params.aoProgredir!({
+              tipo: "leu",
+              dominios: [...new Set(novos)],
+              totalFontes: urlsVistas.size,
+            });
+          }
+          return;
+        }
+
+        // Bloco de texto depois das buscas = o resumo começou a ser escrito.
+        // O resumo vem quebrado em vários blocos (foram 7 numa medição), então
+        // avisa só na primeira vez — senão a tela pisca a mesma mensagem seguidas vezes.
+        if (bloco.type === "text" && buscasFeitas > 0 && !avisouEscrevendo) {
+          avisouEscrevendo = true;
+          params.aoProgredir!({ tipo: "escrevendo" });
+        }
+      });
+    }
+
+    resposta = await fluxo.finalMessage();
+
+    // As fontes de cada volta ficam só na resposta daquela volta. Acumular aqui
+    // porque, quando a pesquisa pausa e continua, ler apenas a última resposta
+    // descartaria em silêncio tudo que foi encontrado antes.
+    acumularFontes(resposta.content, fontesAchadas, urlsDeFontes);
 
     if (resposta.stop_reason !== "pause_turn") break;
     mensagens.push({ role: "assistant", content: resposta.content });
@@ -61,14 +141,15 @@ export async function pesquisar(params: {
     );
   }
 
-  return { resumo, fontes: extrairFontes(resposta.content) };
+  return { resumo, fontes: fontesAchadas.slice(0, 12) };
 }
 
-/** Lê os links que a busca realmente usou, sem repetir. */
-function extrairFontes(conteudo: Anthropic.ContentBlock[]): Fonte[] {
-  const vistas = new Set<string>();
-  const fontes: Fonte[] = [];
-
+/** Junta os links que a busca usou nesta volta, sem repetir os já vistos. */
+function acumularFontes(
+  conteudo: Anthropic.ContentBlock[],
+  fontes: Fonte[],
+  vistas: Set<string>,
+): void {
   for (const bloco of conteudo) {
     if (bloco.type !== "web_search_tool_result") continue;
     // Quando a busca falha, `content` vem como um objeto de erro em vez de lista.
@@ -81,6 +162,4 @@ function extrairFontes(conteudo: Anthropic.ContentBlock[]): Fonte[] {
       fontes.push({ titulo: item.title || item.url, url: item.url });
     }
   }
-
-  return fontes.slice(0, 12);
 }

@@ -20,53 +20,9 @@ async function contexto() {
   return { usuario, nicho };
 }
 
-/**
- * Roda logo depois do onboarding: pesquisa o nicho e cria os primeiros temas.
- * É a etapa que o usuário vê como "Estudando seu nicho...".
- */
-export async function prepararPainel(): Promise<Resultado> {
-  try {
-    const { usuario, nicho } = await contexto();
-
-    const pesquisa = await obterPesquisaDoNicho({
-      nicheId: nicho.id,
-      nomeNicho: nicho.nome,
-    });
-
-    const jaTem = await prisma.contentIdea.count({
-      where: { nicheId: nicho.id, status: { not: StatusIdeia.DESCARTADO } },
-    });
-
-    if (jaTem === 0) {
-      const temas = await gerarTemas({
-        nicho: nicho.nome,
-        nomeMarca: usuario.brandKit?.nomeMarca ?? nicho.nome,
-        pesquisa,
-      });
-
-      if (temas.length === 0) {
-        return {
-          ok: false,
-          erro: "Não conseguimos montar temas dessa vez. Tente atualizar a pesquisa.",
-        };
-      }
-
-      await prisma.contentIdea.createMany({
-        data: temas.map((t) => ({
-          nicheId: nicho.id,
-          titulo: t.titulo,
-          justificativa: t.justificativa,
-          status: StatusIdeia.SUGERIDO,
-        })),
-      });
-    }
-
-    revalidatePath("/painel");
-    return { ok: true };
-  } catch (erro) {
-    return { ok: false, erro: traduzirErroIA(erro) };
-  }
-}
+// A preparação do primeiro acesso vive em src/app/api/preparar/route.ts, e não
+// aqui: ela leva perto de três minutos e a tela precisa acompanhar o andamento.
+// Server action só devolve valor no fim, então não serve para isso.
 
 /** Botão "Quero mais ideias" — gera temas novos sem repetir os que já existem. */
 export async function gerarMaisTemas(): Promise<Resultado> {
