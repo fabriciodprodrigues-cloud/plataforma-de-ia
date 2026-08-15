@@ -30,6 +30,12 @@ type EventoSaida =
   | { tipo: "erro"; mensagem: string };
 
 export async function POST() {
+  // A autenticação fica FORA do stream de propósito. `exigirUsuario()` sinaliza
+  // "sem sessão" lançando o redirect do Next; se isso acontecesse lá dentro, o
+  // catch engoliria o redirect e mandaria para a tela um "erro ao falar com a
+  // IA" — mensagem errada para um problema de sessão.
+  const usuario = await exigirUsuario();
+
   const codificador = new TextEncoder();
 
   const fluxo = new ReadableStream({
@@ -41,7 +47,6 @@ export async function POST() {
       };
 
       try {
-        const usuario = await exigirUsuario();
         const nicho = usuario.niches[0];
         if (!nicho) {
           enviar({
