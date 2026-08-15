@@ -217,7 +217,8 @@ model GeneratedArte {
   termoFoto    String?     @map("termo_foto")
   fotoFundoUrl String?     @map("foto_fundo_url")
   fotoCredito  String?     @map("foto_credito") // atribuição do Pexels
-  urlFinalPng  String?     @map("url_final_png")
+  // Não existe coluna para o PNG final: a conversão acontece no navegador, na
+  // hora do download (SVG → canvas → arquivo). Nada é gravado no servidor.
   criadoEm     DateTime    @default(now()) @map("criado_em")
   atualizadoEm DateTime    @updatedAt @map("atualizado_em")
 

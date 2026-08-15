@@ -29,6 +29,17 @@ function dominio(url: string): string {
   }
 }
 
+/**
+ * Teto de buscas por pesquisa. Usado nos dois lugares que precisam concordar:
+ * o parâmetro `max_uses` da tool e o texto do prompt.
+ *
+ * Contar isso ao modelo importa. Sem o aviso, ele descobre o limite batendo
+ * nele: numa medição com teto de 3 ele tentou 14 buscas, gastou 93 mil tokens
+ * brigando com a parede e terminou pedindo desculpas em vez de resumir as 23
+ * fontes que já tinha em mãos.
+ */
+const MAX_BUSCAS = 6;
+
 const SISTEMA = `Você é um pesquisador de conteúdo para redes sociais, brasileiro, e escreve sempre em português do Brasil.
 
 Sua tarefa é descobrir o que está em alta AGORA no nicho informado e resumir de um jeito prático para quem vai criar conteúdo.
@@ -38,7 +49,14 @@ Regras:
 - Priorize fontes brasileiras e conteúdo dos últimos meses.
 - Escreva o resumo em tópicos curtos, direto ao ponto, sem enrolação e sem jargão de marketing.
 - Foque no que gera conteúdo: dores do público, dúvidas comuns, formatos que estão funcionando, temas em alta, erros que as pessoas cometem.
-- No máximo 400 palavras.`;
+- No máximo 400 palavras.
+
+ORÇAMENTO DE BUSCAS — você tem no máximo ${MAX_BUSCAS} buscas nesta tarefa.
+- Cada busca deve trazer um ângulo diferente. Não repita uma consulta que você já fez.
+- Ao usar a última, escreva o resumo com o que encontrou até ali. Material parcial
+  ainda é material: organize o que tem.
+- Não peça desculpas pelo limite, não comente sobre a ferramenta e não sugira que a
+  pessoa pesquise por conta própria. O resumo É a entrega.`;
 
 /**
  * Pesquisa o nicho (ou um tema específico dentro dele) usando a busca na web
@@ -76,7 +94,9 @@ export async function pesquisar(params: {
       model: MODELO,
       max_tokens: 8000,
       system: SISTEMA,
-      tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 6 }],
+      tools: [
+        { type: "web_search_20260209", name: "web_search", max_uses: MAX_BUSCAS },
+      ],
       messages: mensagens,
     });
 
