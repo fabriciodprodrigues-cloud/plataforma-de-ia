@@ -1,10 +1,13 @@
 import type { FormatoArte, Plataforma, TipoConteudo } from "@/generated/prisma/enums";
 
 /**
- * Nome da marca. Ainda não definido — trocar AQUI muda em toda a aplicação
- * (título da aba, cabeçalhos, e-mails, textos de interface).
+ * Nome da marca. Trocar AQUI muda em toda a aplicação (título da aba,
+ * cabeçalhos, textos de interface).
+ *
+ * Não confundir com o enum `Plataforma`, que é a rede social (Instagram,
+ * YouTube…). São coisas diferentes que por acaso tinham o mesmo nome antes.
  */
-export const APP_NAME = "Plataforma";
+export const APP_NAME = "Volucks IA";
 export const APP_DESCRICAO =
   "Pesquisa de nicho, roteiro, arte e SEO prontos para cada rede social.";
 
