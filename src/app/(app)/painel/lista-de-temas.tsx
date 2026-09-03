@@ -115,7 +115,7 @@ export function ListaDeTemas({
         {plataformas.map((p) => (
           <span
             key={p}
-            className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-2.5 py-1 font-medium text-tinta-700"
+            className="inline-flex items-center gap-1.5 rounded-full border border-linha bg-cartao px-2.5 py-1 font-medium text-tinta-700"
           >
             <IconePlataforma plataforma={p} className="size-3.5" />
             {PLATAFORMAS[p].nome}
@@ -187,7 +187,7 @@ export function ListaDeTemas({
                     : "Marcar como favorito"
                 }
                 aria-pressed={tema.status === "FAVORITO"}
-                className="shrink-0 rounded-full p-1.5 text-tinta-400 transition hover:bg-black/5 hover:text-red-500"
+                className="shrink-0 rounded-full p-1.5 text-tinta-400 transition hover:bg-white/5 hover:text-red-500"
               >
                 <Heart
                   className={cn(
@@ -206,7 +206,7 @@ export function ListaDeTemas({
             )}
 
             {tema.conteudosProntos > 0 && (
-              <p className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+              <p className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-300">
                 <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden />
                 {tema.conteudosProntos}{" "}
                 {tema.conteudosProntos === 1 ? "conteúdo pronto" : "conteúdos prontos"}
@@ -225,7 +225,7 @@ export function ListaDeTemas({
                 type="button"
                 onClick={() => alterarStatus(tema.id, "DESCARTADO")}
                 aria-label="Descartar tema"
-                className="rounded-full p-2.5 text-tinta-400 transition hover:bg-black/5 hover:text-red-600"
+                className="rounded-full p-2.5 text-tinta-400 transition hover:bg-white/5 hover:text-red-300"
               >
                 <Trash2 className="size-4" aria-hidden />
               </button>

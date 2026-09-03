@@ -32,7 +32,7 @@ export default function Home() {
         <span className="text-lg font-semibold tracking-tight">{APP_NAME}</span>
         <Link
           href="/entrar"
-          className="rounded-full px-4 py-2 text-sm font-medium text-tinta-700 transition hover:bg-black/5"
+          className="rounded-full px-4 py-2 text-sm font-medium text-tinta-700 transition hover:bg-white/5"
         >
           Entrar
         </Link>
@@ -61,7 +61,7 @@ export default function Home() {
           </Link>
           <Link
             href="/entrar"
-            className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-6 py-3.5 text-base font-semibold text-tinta-700 transition hover:bg-black/[0.03]"
+            className="inline-flex items-center justify-center rounded-full border border-linha bg-cartao px-6 py-3.5 text-base font-semibold text-tinta-700 transition hover:bg-white/5"
           >
             Já tenho conta
           </Link>

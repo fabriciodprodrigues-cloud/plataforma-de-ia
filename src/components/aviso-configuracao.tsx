@@ -42,23 +42,23 @@ export function AvisoConfiguracao() {
   return (
     <div
       role="alert"
-      className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 sm:px-6"
+      className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-3 text-amber-300 sm:px-6"
     >
       <div className="mx-auto max-w-6xl text-sm">
         <p className="font-semibold">
           Falta configurar {pendentes.length}{" "}
           {pendentes.length === 1 ? "chave" : "chaves"} no arquivo{" "}
-          <code className="rounded bg-amber-100 px-1">.env</code>
+          <code className="rounded bg-amber-500/10 px-1">.env</code>
         </p>
         <ul className="mt-1.5 space-y-0.5">
           {pendentes.map((p) => (
             <li key={p.chave}>
-              <code className="rounded bg-amber-100 px-1 text-xs">{p.chave}</code> —{" "}
+              <code className="rounded bg-amber-500/10 px-1 text-xs">{p.chave}</code> —{" "}
               {p.oQueE}
             </li>
           ))}
         </ul>
-        <p className="mt-1.5 text-amber-800">
+        <p className="mt-1.5 text-amber-300">
           O passo a passo está no <strong>README.md</strong>, seção “Configuração”.
           Depois de preencher, salve o arquivo e recarregue a página.
         </p>

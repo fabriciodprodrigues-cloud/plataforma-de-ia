@@ -160,7 +160,7 @@ export function SecaoRoteiro({
                     "rounded-full border px-4 py-2 text-sm font-medium transition",
                     ativa
                       ? "border-marca-500 bg-marca-500 text-white"
-                      : "border-black/10 bg-white text-tinta-700 hover:border-black/25",
+                      : "border-linha bg-cartao text-tinta-700 hover:border-linha",
                     regerando && "cursor-not-allowed opacity-60",
                   )}
                 >
@@ -197,7 +197,7 @@ export function SecaoRoteiro({
         />
 
         {regerando && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white/80 backdrop-blur-[1px]">
+          <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-cartao/80 backdrop-blur-[1px]">
             <p
               role="status"
               className="flex items-center gap-2 font-medium text-tinta-700"

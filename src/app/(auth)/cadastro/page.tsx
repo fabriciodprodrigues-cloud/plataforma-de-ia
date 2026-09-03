@@ -18,7 +18,7 @@ export default function PaginaCadastro() {
 
       <p className="mt-6 text-center text-sm text-tinta-500">
         Já tem conta?{" "}
-        <Link href="/entrar" className="font-semibold text-marca-600 hover:underline">
+        <Link href="/entrar" className="font-semibold text-marca-700 hover:underline">
           Entrar
         </Link>
       </p>

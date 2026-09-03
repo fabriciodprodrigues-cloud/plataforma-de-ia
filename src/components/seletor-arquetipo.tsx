@@ -36,7 +36,7 @@ export function SeletorArquetipo({
   if (!mostrandoQuiz && info) {
     const gatilho = GATILHOS[info.gatilho];
     return (
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-linha bg-cartao p-4">
         <div className="min-w-0">
           <p className="font-semibold">{info.nome}</p>
           <p className="mt-0.5 text-sm text-tinta-400">
@@ -49,7 +49,7 @@ export function SeletorArquetipo({
             setMotivacao(null);
             setRefazendo(true);
           }}
-          className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1.5 text-sm font-medium text-tinta-500 transition hover:border-marca-400 hover:text-marca-700"
+          className="inline-flex items-center gap-1.5 rounded-full border border-linha px-3 py-1.5 text-sm font-medium text-tinta-500 transition hover:border-marca-400 hover:text-marca-700"
         >
           <RefreshCw className="size-3.5" aria-hidden />
           Refazer
@@ -59,7 +59,7 @@ export function SeletorArquetipo({
   }
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-white p-4">
+    <div className="rounded-2xl border border-linha bg-cartao p-4">
       <p className="font-medium text-tinta-700">
         {motivacao === null ? PERGUNTA_MOTIVACAO : PERGUNTA_ARQUETIPO}
       </p>
@@ -71,7 +71,7 @@ export function SeletorArquetipo({
                 key={opcao.motivacao}
                 type="button"
                 onClick={() => setMotivacao(opcao.motivacao)}
-                className="rounded-xl border border-black/10 p-3 text-left text-sm transition hover:border-marca-500 hover:bg-marca-50"
+                className="rounded-xl border border-linha p-3 text-left text-sm transition hover:border-marca-500 hover:bg-marca-50"
               >
                 {opcao.texto}
               </button>
@@ -85,7 +85,7 @@ export function SeletorArquetipo({
                   setRefazendo(false);
                   setMotivacao(null);
                 }}
-                className="rounded-xl border border-black/10 p-3 text-left text-sm transition hover:border-marca-500 hover:bg-marca-50"
+                className="rounded-xl border border-linha p-3 text-left text-sm transition hover:border-marca-500 hover:bg-marca-50"
               >
                 {opcao.texto}
                 <span className="mt-0.5 block text-xs text-tinta-400">

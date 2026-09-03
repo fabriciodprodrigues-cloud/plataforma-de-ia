@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 type Tom = "erro" | "sucesso" | "info";
 
 const estilos: Record<Tom, { caixa: string; icone: typeof Info }> = {
-  erro: { caixa: "border-red-200 bg-red-50 text-red-800", icone: CircleAlert },
+  erro: { caixa: "border-red-500/30 bg-red-500/10 text-red-300", icone: CircleAlert },
   sucesso: {
-    caixa: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    caixa: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
     icone: CircleCheck,
   },
   info: { caixa: "border-marca-200 bg-marca-50 text-marca-800", icone: Info },

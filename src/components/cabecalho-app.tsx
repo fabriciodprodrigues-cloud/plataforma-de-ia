@@ -8,7 +8,7 @@ export function CabecalhoApp({ usuario }: { usuario: UsuarioCompleto }) {
   const marca = usuario.brandKit;
 
   return (
-    <header className="sticky top-0 z-30 border-b border-black/5 bg-white/85 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-linha bg-cartao/85 backdrop-blur">
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link href="/painel" className="flex min-w-0 items-center gap-2.5">
           {marca?.logoUrl ? (
@@ -36,7 +36,7 @@ export function CabecalhoApp({ usuario }: { usuario: UsuarioCompleto }) {
         <div className="flex items-center gap-1">
           <Link
             href="/marca"
-            className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-tinta-700 transition hover:bg-black/5"
+            className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-tinta-700 transition hover:bg-white/5"
           >
             <Palette className="size-4" aria-hidden />
             <span className="hidden sm:inline">Minha marca</span>
@@ -45,7 +45,7 @@ export function CabecalhoApp({ usuario }: { usuario: UsuarioCompleto }) {
           <form action="/auth/sair" method="post">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-tinta-500 transition hover:bg-black/5 hover:text-tinta-700"
+              className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-tinta-500 transition hover:bg-white/5 hover:text-tinta-700"
             >
               <LogOut className="size-4" aria-hidden />
               <span className="hidden sm:inline">Sair</span>

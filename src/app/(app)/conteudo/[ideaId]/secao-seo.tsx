@@ -185,7 +185,7 @@ export function SecaoSeo({
             {dados.seo.tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white py-1 pr-1 pl-3 text-sm"
+                className="inline-flex items-center gap-1 rounded-full border border-linha bg-cartao py-1 pr-1 pl-3 text-sm"
               >
                 {r.prefixo}
                 {tag}
@@ -193,7 +193,7 @@ export function SecaoSeo({
                   type="button"
                   onClick={() => removerTag(tag)}
                   aria-label={`Remover ${tag}`}
-                  className="rounded-full p-1 text-tinta-400 transition hover:bg-black/5 hover:text-red-600"
+                  className="rounded-full p-1 text-tinta-400 transition hover:bg-white/5 hover:text-red-300"
                 >
                   <X className="size-3.5" aria-hidden />
                 </button>
@@ -225,7 +225,7 @@ export function SecaoSeo({
               type="button"
               onClick={adicionarTag}
               disabled={!novaTag.trim()}
-              className="rounded-xl border border-black/10 bg-white px-4 text-tinta-700 transition hover:bg-black/[0.03] disabled:opacity-40"
+              className="rounded-xl border border-linha bg-cartao px-4 text-tinta-700 transition hover:bg-white/5 disabled:opacity-40"
               aria-label="Adicionar"
             >
               <Plus className="size-4" aria-hidden />
@@ -250,7 +250,7 @@ function BotaoCopiar({ copiado, onClick }: { copiado: boolean; onClick: () => vo
       onClick={onClick}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium transition",
-        copiado ? "text-emerald-600" : "text-tinta-500 hover:bg-black/5",
+        copiado ? "text-emerald-300" : "text-tinta-500 hover:bg-white/5",
       )}
     >
       {copiado ? (

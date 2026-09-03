@@ -154,7 +154,7 @@ export function FormularioMarca({
                   "flex items-center gap-3 rounded-2xl border p-3.5 text-left transition",
                   marcada
                     ? "border-marca-500 bg-marca-50 ring-2 ring-marca-500/20"
-                    : "border-black/10 bg-white hover:border-black/20",
+                    : "border-linha bg-cartao hover:border-linha",
                 )}
               >
                 <span
@@ -164,7 +164,7 @@ export function FormularioMarca({
                   <IconePlataforma plataforma={id} className="size-4" />
                 </span>
                 <span className="flex-1 font-medium">{meta.nome}</span>
-                {marcada && <Check className="size-4 text-marca-600" aria-hidden />}
+                {marcada && <Check className="size-4 text-marca-700" aria-hidden />}
               </button>
             );
           })}
@@ -174,7 +174,7 @@ export function FormularioMarca({
       <div>
         <span className="rotulo">Seu logo</span>
         {logoUrl ? (
-          <div className="flex items-center gap-4 rounded-2xl border border-black/10 bg-white p-4">
+          <div className="flex items-center gap-4 rounded-2xl border border-linha bg-cartao p-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={logoUrl} alt="Seu logo" className="size-14 rounded-xl object-contain" />
             <p className="flex-1 text-sm text-tinta-500">
@@ -188,13 +188,13 @@ export function FormularioMarca({
                 if (inputArquivo.current) inputArquivo.current.value = "";
               }}
               aria-label="Remover logo"
-              className="rounded-full p-2 text-tinta-400 transition hover:bg-black/5 hover:text-red-600"
+              className="rounded-full p-2 text-tinta-400 transition hover:bg-white/5 hover:text-red-300"
             >
               <Trash2 className="size-4" aria-hidden />
             </button>
           </div>
         ) : (
-          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-black/15 bg-white px-4 py-6 text-sm font-medium text-tinta-700 transition hover:border-marca-400">
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-linha bg-cartao px-4 py-6 text-sm font-medium text-tinta-700 transition hover:border-marca-400">
             {enviandoLogo ? (
               <>
                 <LoaderCircle className="size-4 animate-spin" aria-hidden />
@@ -233,7 +233,7 @@ export function FormularioMarca({
                   "relative size-11 rounded-xl transition",
                   escolhida
                     ? "ring-2 ring-marca-500 ring-offset-2"
-                    : "ring-1 ring-black/10 hover:scale-105",
+                    : "ring-1 ring-linha hover:scale-105",
                 )}
                 style={{ backgroundColor: cor }}
               >
@@ -248,7 +248,7 @@ export function FormularioMarca({
               </button>
             );
           })}
-          <label className="flex size-11 cursor-pointer items-center justify-center rounded-xl border border-dashed border-black/20 text-xs font-medium text-tinta-400 transition hover:border-marca-400">
+          <label className="flex size-11 cursor-pointer items-center justify-center rounded-xl border border-dashed border-linha text-xs font-medium text-tinta-400 transition hover:border-marca-400">
             Outra
             <input
               type="color"
@@ -273,7 +273,7 @@ export function FormularioMarca({
                 "rounded-2xl border p-3 text-left transition",
                 f.id === fonte
                   ? "border-marca-500 bg-marca-50 ring-2 ring-marca-500/20"
-                  : "border-black/10 bg-white hover:border-black/20",
+                  : "border-linha bg-cartao hover:border-linha",
               )}
             >
               <span

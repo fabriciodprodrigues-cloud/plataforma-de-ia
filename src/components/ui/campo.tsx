@@ -32,7 +32,7 @@ export function Campo({ rotulo, dica, erro, className, ...props }: Props) {
         </p>
       )}
       {erro && (
-        <p id={idErro} className="mt-1.5 text-sm font-medium text-red-600">
+        <p id={idErro} className="mt-1.5 text-sm font-medium text-red-300">
           {erro}
         </p>
       )}

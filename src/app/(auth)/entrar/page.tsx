@@ -22,7 +22,7 @@ export default async function PaginaEntrar({
 
       <p className="mt-6 text-center text-sm text-tinta-500">
         Ainda não tem conta?{" "}
-        <Link href="/cadastro" className="font-semibold text-marca-600 hover:underline">
+        <Link href="/cadastro" className="font-semibold text-marca-700 hover:underline">
           Criar conta grátis
         </Link>
       </p>

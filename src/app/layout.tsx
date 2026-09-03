@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import {
   Fraunces,
   Inter,
+  Space_Grotesk,
   Montserrat,
   Playfair_Display,
   Poppins,
@@ -14,6 +15,14 @@ import "./globals.css";
 // escolhê-las como fonte da marca dele — precisam estar disponíveis para a
 // pré-visualização das artes. Todas são auto-hospedadas pelo next/font.
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+
+// Space Grotesk é a fonte dos títulos no tema escuro — dá o ar técnico do
+// protótipo sem atrapalhar a leitura de texto corrido, que segue no Inter.
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "600", "700"],
@@ -54,7 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="pt-BR"
-      className={`${inter.variable} ${poppins.variable} ${montserrat.variable} ${playfair.variable} ${fraunces.variable}`}
+      className={`${inter.variable} ${spaceGrotesk.variable} ${poppins.variable} ${montserrat.variable} ${playfair.variable} ${fraunces.variable}`}
     >
       <body className="font-sans min-h-dvh">
         <AvisoConfiguracao />

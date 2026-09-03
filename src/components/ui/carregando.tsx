@@ -31,5 +31,5 @@ export function Carregando({
 
 /** Bloco cinza pulsando, usado enquanto o conteúdo real não chega. */
 export function Esqueleto({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-lg bg-black/[0.06]", className)} />;
+  return <div className={cn("animate-pulse rounded-lg bg-white/10", className)} />;
 }

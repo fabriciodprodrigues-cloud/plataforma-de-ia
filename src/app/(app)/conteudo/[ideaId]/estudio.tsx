@@ -159,7 +159,7 @@ export function Estudio({
             <div
               role="tablist"
               aria-label="Escolha a rede social"
-              className="flex w-max min-w-full gap-2 border-b border-black/[0.07] pb-px"
+              className="flex w-max min-w-full gap-2 border-b border-linha pb-px"
             >
               {dados.map((d) => {
                 const meta = PLATAFORMAS[d.plataforma];
@@ -180,7 +180,7 @@ export function Estudio({
                     <IconePlataforma plataforma={d.plataforma} className="size-4" />
                     {meta.nome}
                     {d.duracaoSegundos !== null && (
-                      <span className="rounded-full bg-black/[0.06] px-1.5 py-0.5 text-xs">
+                      <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-xs">
                         {rotuloDuracao(d.plataforma, d.duracaoSegundos)}
                       </span>
                     )}
@@ -212,7 +212,7 @@ export function Estudio({
                           "flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-medium transition",
                           ativa
                             ? "bg-marca-50 text-marca-700"
-                            : "text-tinta-500 hover:bg-black/[0.04] hover:text-tinta-900",
+                            : "text-tinta-500 hover:bg-white/5 hover:text-tinta-900",
                         )}
                       >
                         <Icone className="size-4 shrink-0" aria-hidden />
@@ -220,7 +220,7 @@ export function Estudio({
                         <span
                           className={cn(
                             "size-2 shrink-0 rounded-full",
-                            pronto ? "bg-emerald-500" : "bg-black/15",
+                            pronto ? "bg-emerald-500" : "bg-white/10",
                           )}
                           aria-label={pronto ? "pronto" : "incompleto"}
                         />

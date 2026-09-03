@@ -1,29 +1,51 @@
 @import "tailwindcss";
 
 @theme {
-  /* Paleta da própria plataforma (não confundir com a paleta da marca do usuário,
-     que é extraída do logo dele e fica no brand_kit). */
-  --color-marca-50: #f3f1ff;
-  --color-marca-100: #e9e5ff;
-  --color-marca-200: #d5cdff;
-  --color-marca-300: #b7a8ff;
-  --color-marca-400: #9478ff;
-  --color-marca-500: #6d4aff;
-  --color-marca-600: #5b2ff5;
-  --color-marca-700: #4c1fdb;
-  --color-marca-800: #401bb3;
-  --color-marca-900: #361a8f;
+  /* Paleta da própria plataforma (não confundir com a paleta da marca do
+     usuário, que é extraída do logo dele e fica no brand_kit).
+
+     Tema escuro, seguindo o protótipo Volucks. A escala `tinta` significa
+     FORÇA DA TINTA sobre o fundo, não "quão escuro" — por isso ela inverteu
+     junto com o tema: tinta-900 continua sendo o texto principal, só que agora
+     é quase branco. Foi o que permitiu virar o tema sem reescrever centenas de
+     classes espalhadas pelos componentes. */
+
+  --color-marca-50: #131c4a;
+  --color-marca-100: #17225a;
+  --color-marca-200: #1d2b70;
+  --color-marca-300: #2a3a95;
+  --color-marca-400: #2647ff;
+  --color-marca-500: #2647ff;
+  /* 600 e o preenchimento de hover (mais claro que o 500, como no prototipo).
+     Nao usar como cor de texto: sobre o fundo escuro da 3,86 de contraste.
+     Para texto e link, usar 700 em diante — ciano, que passa folgado. */
+  --color-marca-600: #3c5cff;
+  --color-marca-700: #4cc9f0;
+  --color-marca-800: #6fd6f4;
+  --color-marca-900: #9ee4f8;
 
   --color-realce-400: #ff8a6b;
   --color-realce-500: #ff6b4a;
   --color-realce-600: #ed4f2c;
 
-  --color-tinta-400: #8b8b9b;
-  --color-tinta-500: #6b6b7d;
-  --color-tinta-700: #3d3d4d;
-  --color-tinta-900: #1a1a24;
+  /* O protótipo usa #5C6690 aqui, mas medido dá 3,15 de contraste dentro dos
+     cartões — abaixo do mínimo de 4,5. Clareado até passar; o papel de "texto
+     mais fraco da escala" continua o mesmo. */
+  --color-tinta-400: #8d97c4;
+  --color-tinta-500: #9aa3c7;
+  --color-tinta-700: #c3cbe8;
+  --color-tinta-900: #f5f7ff;
+
+  /* Superfícies. Existem como tokens próprios porque `bg-white` e
+     `border-black/10` não têm como virar tema escuro sozinhos. */
+  --color-fundo: #080b20;
+  --color-superficie: #0b1130;
+  --color-cartao: #0f1638;
+  --color-linha: #232a52;
+  --color-linha-forte: #333b6b;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-titulo: var(--font-space-grotesk), var(--font-inter), sans-serif;
 
   --radius-xl2: 1.25rem;
 }
@@ -31,10 +53,23 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    color-scheme: dark;
   }
 
   body {
-    @apply bg-[#fbfbfd] text-tinta-900 antialiased;
+    @apply bg-fundo text-tinta-900 antialiased;
+    /* Os dois halos são do protótipo: um azul no alto à direita, um ciano à
+       esquerda. Ficam fixos para não "deslizarem" quando a página rola. */
+    background-image:
+      radial-gradient(900px 500px at 85% -10%, rgba(38, 71, 255, 0.16), transparent 60%),
+      radial-gradient(700px 420px at -5% 15%, rgba(76, 201, 240, 0.1), transparent 55%);
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2 {
+    font-family: var(--font-titulo);
+    letter-spacing: -0.02em;
   }
 
   /* Alvos de toque confortáveis no celular. */
@@ -43,18 +78,19 @@
     touch-action: manipulation;
   }
 
-  /* O foco precisa ficar visível — parte do público navega por teclado. */
+  /* O foco precisa ficar visível — parte do público navega por teclado.
+     No escuro o ciano contrasta melhor que o azul do botão. */
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-marca-500;
+    @apply outline-2 outline-offset-2 outline-marca-700;
   }
 }
 
 @layer components {
   .campo {
-    @apply w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-base
-           text-tinta-900 placeholder:text-tinta-400 shadow-sm transition
-           focus:border-marca-500 focus:ring-4 focus:ring-marca-500/15 focus:outline-none
-           disabled:cursor-not-allowed disabled:bg-black/5;
+    @apply w-full rounded-xl border border-linha bg-superficie px-4 py-3 text-base
+           text-tinta-900 placeholder:text-tinta-400 transition
+           focus:border-marca-500 focus:ring-4 focus:ring-marca-500/25 focus:outline-none
+           disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-tinta-400;
   }
 
   .rotulo {
@@ -62,7 +98,7 @@
   }
 
   .cartao {
-    @apply rounded-2xl border border-black/5 bg-white shadow-[0_1px_3px_rgba(16,16,32,0.06)];
+    @apply rounded-2xl border border-linha bg-cartao;
   }
 }
 

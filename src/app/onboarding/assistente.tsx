@@ -186,7 +186,7 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
           </span>
         </div>
         <div
-          className="h-2 overflow-hidden rounded-full bg-black/[0.07]"
+          className="h-2 overflow-hidden rounded-full bg-white/10"
           role="progressbar"
           aria-valuenow={passo}
           aria-valuemin={1}
@@ -240,7 +240,7 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
                     key={exemplo}
                     type="button"
                     onClick={() => setNicho(exemplo)}
-                    className="rounded-full border border-black/10 bg-white px-3 py-1.5 text-sm text-tinta-500 transition hover:border-marca-300 hover:text-marca-700"
+                    className="rounded-full border border-linha bg-cartao px-3 py-1.5 text-sm text-tinta-500 transition hover:border-marca-300 hover:text-marca-700"
                   >
                     {exemplo}
                   </button>
@@ -272,7 +272,7 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
                     "flex items-center gap-3 rounded-2xl border p-4 text-left transition",
                     marcada
                       ? "border-marca-500 bg-marca-50 ring-2 ring-marca-500/20"
-                      : "border-black/10 bg-white hover:border-black/20",
+                      : "border-linha bg-cartao hover:border-linha",
                   )}
                 >
                   <span
@@ -294,7 +294,7 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
                       "flex size-6 shrink-0 items-center justify-center rounded-full border transition",
                       marcada
                         ? "border-marca-500 bg-marca-500 text-white"
-                        : "border-black/15 bg-white",
+                        : "border-linha bg-cartao",
                     )}
                     aria-hidden
                   >
@@ -319,7 +319,7 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
             <div>
               <span className="rotulo">Seu logo</span>
               {logoPreview ? (
-                <div className="flex items-center gap-4 rounded-2xl border border-black/10 bg-white p-4">
+                <div className="flex items-center gap-4 rounded-2xl border border-linha bg-cartao p-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={logoPreview}
@@ -333,7 +333,7 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
                         Enviando seu logo...
                       </p>
                     ) : logoUrl ? (
-                      <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-600">
+                      <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-300">
                         <Check className="size-4" aria-hidden />
                         Logo salvo
                       </p>
@@ -350,14 +350,14 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
                   <button
                     type="button"
                     onClick={removerLogo}
-                    className="rounded-full p-2 text-tinta-400 transition hover:bg-black/5 hover:text-red-600"
+                    className="rounded-full p-2 text-tinta-400 transition hover:bg-white/5 hover:text-red-300"
                     aria-label="Remover logo"
                   >
                     <Trash2 className="size-4" aria-hidden />
                   </button>
                 </div>
               ) : (
-                <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-black/15 bg-white px-4 py-8 text-center transition hover:border-marca-400 hover:bg-marca-50/40">
+                <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-linha bg-cartao px-4 py-8 text-center transition hover:border-marca-400 hover:bg-marca-50/40">
                   <ImagePlus className="size-7 text-marca-500" aria-hidden />
                   <span className="font-medium text-tinta-700">
                     Toque para escolher seu logo
@@ -398,7 +398,7 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
                         "relative size-11 rounded-xl transition",
                         escolhida
                           ? "ring-2 ring-marca-500 ring-offset-2"
-                          : "ring-1 ring-black/10 hover:scale-105",
+                          : "ring-1 ring-linha hover:scale-105",
                       )}
                       style={{ backgroundColor: cor }}
                     >
@@ -414,7 +414,7 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
                   );
                 })}
 
-                <label className="flex size-11 cursor-pointer items-center justify-center rounded-xl border border-dashed border-black/20 text-xs font-medium text-tinta-400 transition hover:border-marca-400 hover:text-marca-600">
+                <label className="flex size-11 cursor-pointer items-center justify-center rounded-xl border border-dashed border-linha text-xs font-medium text-tinta-400 transition hover:border-marca-400 hover:text-marca-700">
                   Outra
                   <input
                     type="color"
@@ -448,7 +448,7 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
                         "rounded-2xl border p-3 text-left transition",
                         escolhida
                           ? "border-marca-500 bg-marca-50 ring-2 ring-marca-500/20"
-                          : "border-black/10 bg-white hover:border-black/20",
+                          : "border-linha bg-cartao hover:border-linha",
                       )}
                     >
                       <span
@@ -478,11 +478,11 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
                     <img
                       src={logoPreview}
                       alt=""
-                      className="size-9 rounded-full bg-white/90 object-contain p-1"
+                      className="size-9 rounded-full bg-cartao/90 object-contain p-1"
                     />
                   ) : (
                     <span
-                      className="flex size-9 items-center justify-center rounded-full bg-white/90 text-sm font-bold"
+                      className="flex size-9 items-center justify-center rounded-full bg-cartao/90 text-sm font-bold"
                       style={{ color: corPrimaria, fontFamily: fonteCss(fonte) }}
                     >
                       {(nomeMarca || "M").charAt(0).toUpperCase()}
@@ -526,7 +526,7 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
                       setMotivacao(opcao.motivacao);
                       setPerguntaQuiz(2);
                     }}
-                    className="rounded-2xl border border-black/10 bg-white p-4 text-left transition hover:border-marca-500 hover:bg-marca-50 disabled:opacity-60"
+                    className="rounded-2xl border border-linha bg-cartao p-4 text-left transition hover:border-marca-500 hover:bg-marca-50 disabled:opacity-60"
                   >
                     <span className="block font-medium text-tinta-700">{opcao.texto}</span>
                   </button>
@@ -540,7 +540,7 @@ export function Assistente({ nomeUsuario }: { nomeUsuario: string | null }) {
                       type="button"
                       disabled={salvando}
                       onClick={() => finalizar(opcao.arquetipo)}
-                      className="rounded-2xl border border-black/10 bg-white p-4 text-left transition hover:border-marca-500 hover:bg-marca-50 disabled:opacity-60"
+                      className="rounded-2xl border border-linha bg-cartao p-4 text-left transition hover:border-marca-500 hover:bg-marca-50 disabled:opacity-60"
                     >
                       <span className="block font-medium text-tinta-700">{opcao.texto}</span>
                       {/* O nome do arquétipo aparece discreto: quem se importa

@@ -174,7 +174,7 @@ export function Preparando() {
               <div className="flex items-center gap-3">
                 <span className="flex size-6 shrink-0 items-center justify-center">
                   {concluida ? (
-                    <Check className="size-5 text-emerald-600" aria-hidden />
+                    <Check className="size-5 text-emerald-300" aria-hidden />
                   ) : atual ? (
                     <LoaderCircle
                       className="size-5 animate-spin text-marca-500"
@@ -220,7 +220,7 @@ export function Preparando() {
           {sites.map((s) => (
             <span
               key={s}
-              className="rounded-full bg-black/[0.05] px-2 py-0.5 text-xs text-tinta-500"
+              className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-tinta-500"
             >
               {s}
             </span>

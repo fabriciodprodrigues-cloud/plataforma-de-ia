@@ -216,7 +216,7 @@ export function SecaoArte({
       <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* Prévia */}
         <div>
-          <div className="relative overflow-hidden rounded-2xl bg-black/[0.04] p-3">
+          <div className="relative overflow-hidden rounded-2xl bg-white/5 p-3">
             <canvas
               ref={canvasRef}
               aria-label={`Prévia da arte para ${meta.nome}`}
@@ -224,7 +224,7 @@ export function SecaoArte({
               style={{ maxHeight: "min(70vh, 640px)", width: "auto", maxWidth: "100%" }}
             />
             {desenhando && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+              <div className="absolute inset-0 flex items-center justify-center bg-cartao/70">
                 <LoaderCircle className="size-6 animate-spin text-marca-500" aria-hidden />
               </div>
             )}
@@ -299,7 +299,7 @@ export function SecaoArte({
                     onClick={() => buscarFotos(termoBusca)}
                     disabled={buscandoFotos || !termoBusca.trim()}
                     aria-label="Buscar"
-                    className="rounded-xl border border-black/10 bg-white px-4 text-tinta-700 transition hover:bg-black/[0.03] disabled:opacity-40"
+                    className="rounded-xl border border-linha bg-cartao px-4 text-tinta-700 transition hover:bg-white/5 disabled:opacity-40"
                   >
                     {buscandoFotos ? (
                       <LoaderCircle className="size-4 animate-spin" aria-hidden />
@@ -334,7 +334,7 @@ export function SecaoArte({
                           "relative aspect-square overflow-hidden rounded-lg transition",
                           escolhida
                             ? "ring-2 ring-marca-500 ring-offset-2"
-                            : "ring-1 ring-black/10 hover:opacity-85",
+                            : "ring-1 ring-linha hover:opacity-85",
                         )}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -352,7 +352,7 @@ export function SecaoArte({
 
               <div>
                 <span className="rotulo">Ou use uma foto sua</span>
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-black/15 bg-white px-4 py-3 text-sm font-medium text-tinta-700 transition hover:border-marca-400">
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-linha bg-cartao px-4 py-3 text-sm font-medium text-tinta-700 transition hover:border-marca-400">
                   {enviandoFoto ? (
                     <>
                       <LoaderCircle className="size-4 animate-spin" aria-hidden />
@@ -405,7 +405,7 @@ function BotaoFundo({
         "flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition",
         ativo
           ? "border-marca-500 bg-marca-50 text-marca-700"
-          : "border-black/10 bg-white text-tinta-700 hover:border-black/25",
+          : "border-linha bg-cartao text-tinta-700 hover:border-linha",
       )}
     >
       {icone}
