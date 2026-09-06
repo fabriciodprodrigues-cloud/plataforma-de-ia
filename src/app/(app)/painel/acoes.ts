@@ -24,7 +24,51 @@ async function contexto() {
 // aqui: ela leva perto de três minutos e a tela precisa acompanhar o andamento.
 // Server action só devolve valor no fim, então não serve para isso.
 
-/** Botão "Quero mais ideias" — gera temas novos sem repetir os que já existem. */
+/**
+ * Gera temas a partir de uma pesquisa e grava os que forem inéditos.
+ *
+ * Os dois botões do painel terminam aqui. A diferença entre eles é só se a
+ * pesquisa foi reaproveitada do cache ou refeita do zero — o que acontece
+ * depois é o mesmo, e é isso que faz os dois produzirem efeito visível.
+ */
+async function gerarEGravarTemas(params: {
+  nicheId: string;
+  nomeNicho: string;
+  nomeMarca: string;
+  pesquisa: string;
+}): Promise<Resultado> {
+  const existentes = await prisma.contentIdea.findMany({
+    where: { nicheId: params.nicheId },
+    select: { titulo: true },
+    orderBy: { criadoEm: "desc" },
+    take: 30,
+  });
+
+  const temas = await gerarTemas({
+    nicho: params.nomeNicho,
+    nomeMarca: params.nomeMarca,
+    pesquisa: params.pesquisa,
+    evitar: existentes.map((e) => e.titulo),
+  });
+
+  if (temas.length === 0) {
+    return { ok: false, erro: "Não veio nenhum tema novo agora. Tente de novo." };
+  }
+
+  await prisma.contentIdea.createMany({
+    data: temas.map((t) => ({
+      nicheId: params.nicheId,
+      titulo: t.titulo,
+      justificativa: t.justificativa,
+      status: StatusIdeia.SUGERIDO,
+    })),
+  });
+
+  revalidatePath("/painel");
+  return { ok: true };
+}
+
+/** Botão "Quero mais ideias" — temas novos a partir da pesquisa já em cache. */
 export async function gerarMaisTemas(): Promise<Resultado> {
   try {
     const { usuario, nicho } = await contexto();
@@ -34,51 +78,42 @@ export async function gerarMaisTemas(): Promise<Resultado> {
       nomeNicho: nicho.nome,
     });
 
-    const existentes = await prisma.contentIdea.findMany({
-      where: { nicheId: nicho.id },
-      select: { titulo: true },
-      orderBy: { criadoEm: "desc" },
-      take: 30,
-    });
-
-    const temas = await gerarTemas({
-      nicho: nicho.nome,
+    return gerarEGravarTemas({
+      nicheId: nicho.id,
+      nomeNicho: nicho.nome,
       nomeMarca: usuario.brandKit?.nomeMarca ?? nicho.nome,
       pesquisa,
-      evitar: existentes.map((e) => e.titulo),
     });
-
-    if (temas.length === 0) {
-      return { ok: false, erro: "Não veio nenhum tema novo agora. Tente de novo." };
-    }
-
-    await prisma.contentIdea.createMany({
-      data: temas.map((t) => ({
-        nicheId: nicho.id,
-        titulo: t.titulo,
-        justificativa: t.justificativa,
-        status: StatusIdeia.SUGERIDO,
-      })),
-    });
-
-    revalidatePath("/painel");
-    return { ok: true };
   } catch (erro) {
     return { ok: false, erro: traduzirErroIA(erro) };
   }
 }
 
-/** Refaz a pesquisa do nicho do zero, ignorando o cache. */
+/**
+ * Botão "Atualizar pesquisa" — refaz a pesquisa do zero E sugere temas com ela.
+ *
+ * Antes esta ação parava depois de gravar a pesquisa nova. Como a lista de
+ * temas não é derivada da pesquisa em tempo de leitura, o usuário esperava
+ * minutos, pagava uma busca na web e via exatamente a mesma lista — um botão
+ * sem efeito observável. Os temas antigos são preservados (podem estar
+ * favoritados ou já ter conteúdo gerado); os novos entram sem repetir.
+ */
 export async function atualizarPesquisa(): Promise<Resultado> {
   try {
-    const { nicho } = await contexto();
-    await obterPesquisaDoNicho({
+    const { usuario, nicho } = await contexto();
+
+    const pesquisa = await obterPesquisaDoNicho({
       nicheId: nicho.id,
       nomeNicho: nicho.nome,
       forcar: true,
     });
-    revalidatePath("/painel");
-    return { ok: true };
+
+    return gerarEGravarTemas({
+      nicheId: nicho.id,
+      nomeNicho: nicho.nome,
+      nomeMarca: usuario.brandKit?.nomeMarca ?? nicho.nome,
+      pesquisa,
+    });
   } catch (erro) {
     return { ok: false, erro: traduzirErroIA(erro) };
   }

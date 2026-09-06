@@ -102,7 +102,7 @@ export function ListaDeTemas({
           variante="secundario"
           onClick={refazerPesquisa}
           carregando={repesquisando}
-          textoCarregando="Pesquisando..."
+          textoCarregando="Pesquisando e criando temas..."
         >
           <RefreshCw className="size-4" aria-hidden />
           Atualizar pesquisa
