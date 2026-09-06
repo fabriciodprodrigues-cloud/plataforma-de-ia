@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Clock, Copy, LoaderCircle, RefreshCw } from "lucide-react";
+import { Check, Clock, Copy, LoaderCircle, RefreshCw, Video } from "lucide-react";
 import { regerarConteudo, salvarConteudo } from "./acoes";
+import { Teleprompter } from "./teleprompter";
 import type { DadosPlataforma } from "./tipos";
 import { Alerta } from "@/components/ui/alerta";
 import { Botao } from "@/components/ui/botao";
@@ -25,6 +26,7 @@ export function SecaoRoteiro({
 
   const [erro, setErro] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [teleprompter, setTeleprompter] = useState(false);
   const [regerando, regerar] = useTransition();
 
   const { estado: estadoSalvamento, erro: erroSalvamento } = useAutoSalvar(
@@ -103,6 +105,10 @@ export function SecaoRoteiro({
                 Copiar
               </>
             )}
+          </Botao>
+          <Botao variante="secundario" onClick={() => setTeleprompter(true)}>
+            <Video className="size-4" aria-hidden />
+            Teleprompter
           </Botao>
           <Botao
             variante="secundario"
@@ -213,6 +219,14 @@ export function SecaoRoteiro({
         {estadoSalvamento === "salvando" && "Salvando..."}
         {estadoSalvamento === "salvo" && "Alterações salvas"}
       </p>
+      {teleprompter && (
+        <Teleprompter
+          texto={dados.conteudo}
+          duracaoSegundos={dados.duracaoSegundos}
+          rotulo={`${meta.rotuloConteudo} · ${meta.nome}`}
+          aoFechar={() => setTeleprompter(false)}
+        />
+      )}
     </section>
   );
 }
