@@ -88,6 +88,9 @@ model User {
   niches              Niche[]
   platformPreferences PlatformPreference[]
   generatedArtes      GeneratedArte[]
+  subscription        Subscription?
+  creditBalance       CreditBalance?
+  creditTransactions  CreditTransaction[]
 
   @@map("users")
 }
@@ -241,4 +244,82 @@ model SeoMetadata {
   script Script @relation(fields: [scriptId], references: [id], onDelete: Cascade)
 
   @@map("seo_metadata")
+}
+
+/// Os três módulos comerciais. O catálogo (preço, cota, recursos) vive em
+/// src/lib/planos.ts — aqui guardamos só qual deles o usuário assinou.
+enum NomePlano {
+  ESSENCIAL
+  CRIADOR
+  COMPLETO
+}
+
+enum StatusAssinatura {
+  ATIVA
+  CANCELADA
+  INADIMPLENTE
+}
+
+enum TipoTransacao {
+  CONSUMO
+  RESET_MENSAL
+  COMPRA_AVULSA
+}
+
+/// Qual assinatura o usuário tem hoje.
+model Subscription {
+  id          String           @id @default(uuid()) @db.Uuid
+  userId      String           @unique @map("user_id") @db.Uuid
+  plano       NomePlano        @default(ESSENCIAL)
+  status      StatusAssinatura @default(ATIVA)
+  inicioCiclo DateTime         @default(now()) @map("inicio_ciclo")
+  /// Quando o saldo do plano volta ao valor cheio. Lido em toda leitura de
+  /// conta: é assim que o reset acontece sem depender de um cron externo.
+  proximoReset DateTime        @map("proximo_reset")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_subscriptions")
+}
+
+/// Saldo corrente. Fonte da verdade para "pode gerar?".
+///
+/// O histórico completo fica em CreditTransaction; esta tabela é só o número
+/// que interessa na hora de decidir, para não somar o ledger inteiro a cada
+/// clique.
+model CreditBalance {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @unique @map("user_id") @db.Uuid
+  /// Créditos do plano do mês. Zeram na virada do ciclo.
+  saldoPlano   Int      @default(0) @map("saldo_plano")
+  /// Créditos comprados avulso. NÃO zeram na virada.
+  saldoAvulso  Int      @default(0) @map("saldo_avulso")
+  minutosVideo Int      @default(0) @map("minutos_video")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("credit_balances")
+}
+
+/// Ledger: todo movimento de crédito, para sempre.
+///
+/// Saldo é derivável daqui, mas o contrário não — por isso as duas tabelas
+/// existem. Quando um saldo parecer errado, é esta lista que conta o porquê.
+model CreditTransaction {
+  id            String        @id @default(uuid()) @db.Uuid
+  userId        String        @map("user_id") @db.Uuid
+  tipo          TipoTransacao
+  /// True quando o movimento saiu (ou entrou) no saldo avulso.
+  origemAvulso  Boolean       @default(false) @map("origem_avulso")
+  /// Positivo em entrada, negativo em consumo.
+  quantidade    Int
+  /// Legível por gente: "Roteiro — Instagram: 5 erros que contadores cometem".
+  motivo        String
+  criadoEm      DateTime      @default(now()) @map("criado_em")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, criadoEm])
+  @@map("credit_transactions")
 }

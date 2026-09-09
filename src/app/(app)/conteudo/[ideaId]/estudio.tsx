@@ -28,12 +28,15 @@ export function Estudio({
   marca,
   plataformasEscolhidas,
   dadosIniciais,
+  temTeleprompter,
 }: {
   ideaId: string;
   titulo: string;
   marca: MarcaCliente;
   plataformasEscolhidas: Plataforma[];
   dadosIniciais: DadosPlataforma[];
+  /** Trava de plano, já decidida no servidor. */
+  temTeleprompter: boolean;
 }) {
   const router = useRouter();
   const [dados, setDados] = useState(dadosIniciais);
@@ -239,6 +242,7 @@ export function Estudio({
                   key={`roteiro-${atual.plataforma}`}
                   ideaId={ideaId}
                   dados={atual}
+                  temTeleprompter={temTeleprompter}
                   aoAtualizar={(m) => atualizarPlataforma(atual.plataforma, m)}
                 />
               )}

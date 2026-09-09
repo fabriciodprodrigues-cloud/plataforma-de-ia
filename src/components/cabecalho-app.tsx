@@ -1,10 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
-import { LogOut, Palette } from "lucide-react";
+import { Coins, LogOut, Palette } from "lucide-react";
 import { APP_NAME } from "@/lib/constants";
 import type { UsuarioCompleto } from "@/lib/auth";
 
-export function CabecalhoApp({ usuario }: { usuario: UsuarioCompleto }) {
+export function CabecalhoApp({
+  usuario,
+  saldo,
+}: {
+  usuario: UsuarioCompleto;
+  /** Créditos disponíveis agora (plano + avulso). */
+  saldo: number;
+}) {
   const marca = usuario.brandKit;
 
   return (
@@ -34,6 +41,23 @@ export function CabecalhoApp({ usuario }: { usuario: UsuarioCompleto }) {
         </Link>
 
         <div className="flex items-center gap-1">
+          {/* O saldo fica visível o tempo todo de propósito: descobrir que
+              acabou só na hora de gerar é a pior hora de descobrir. */}
+          <Link
+            href="/plano"
+            title={`${saldo} ${saldo === 1 ? "crédito disponível" : "créditos disponíveis"}`}
+            className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-tinta-700 transition hover:bg-white/5"
+          >
+            <Coins
+              className={saldo === 0 ? "size-4 text-amber-400" : "size-4"}
+              aria-hidden
+            />
+            <span className="tabular-nums">{saldo}</span>
+            <span className="sr-only">
+              {saldo === 1 ? "crédito disponível" : "créditos disponíveis"}
+            </span>
+          </Link>
+
           <Link
             href="/marca"
             className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-tinta-700 transition hover:bg-white/5"

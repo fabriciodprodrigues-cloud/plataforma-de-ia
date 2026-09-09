@@ -10,6 +10,13 @@ import { ErroIA, traduzirErroIA } from "@/lib/ia/cliente";
 import { gerarConteudoPlataforma } from "@/lib/ia/conteudo";
 import { obterPesquisaDoNicho, pesquisarTema } from "@/lib/servicos/nicho";
 import { gerarSvgDaArte, type DadosMarca } from "@/lib/servicos/arte";
+import { CUSTO } from "@/lib/planos";
+import {
+  debitar,
+  mensagemSemCredito,
+  obterConta,
+  temSaldo,
+} from "@/lib/servicos/creditos";
 
 export type Resultado<T = object> = ({ ok: true } & T) | { ok: false; erro: string };
 
@@ -94,6 +101,14 @@ export async function gerarConteudos(
       return { ok: true, falhas: [] };
     }
 
+    // Confere o saldo antes de chamar a IA. Sem isto o usuário sem crédito
+    // ainda faria a plataforma pagar a API para só depois ouvir "não".
+    const conta = await obterConta(usuario.id);
+    const custoTotal = pendentes.length * CUSTO.CONTEUDO;
+    if (!temSaldo(conta, custoTotal)) {
+      return { ok: false, erro: mensagemSemCredito(conta, custoTotal) };
+    }
+
     const pesquisa = await pesquisaDeBase(ideia);
 
     // Em paralelo: o usuário espera pela plataforma mais lenta, não pela soma.
@@ -170,6 +185,16 @@ export async function gerarConteudos(
       return { ok: false, erro: falhas[0] };
     }
 
+    // Cobra só o que ficou pronto. Se duas redes deram certo e uma quebrou, o
+    // usuário paga duas — quem perdeu a chamada de API foi a plataforma, e é
+    // assim que tem que ser.
+    const prontas = pendentes.length - falhas.length;
+    await debitar({
+      userId: usuario.id,
+      custo: prontas * CUSTO.CONTEUDO,
+      motivo: `Conteúdo para ${prontas} ${prontas === 1 ? "rede" : "redes"} — ${ideia.titulo}`,
+    });
+
     revalidatePath(`/conteudo/${ideaId}`);
     revalidatePath("/painel");
     return { ok: true, falhas };
@@ -185,12 +210,19 @@ export async function regerarConteudo(params: {
   duracaoSegundos: number | null;
 }): Promise<Resultado<{ conteudo: string }>> {
   try {
-    const { ideia, marca, voz } = await contextoIdeia(params.ideaId);
+    const { usuario, ideia, marca, voz } = await contextoIdeia(params.ideaId);
 
     const script = await prisma.script.findUnique({
       where: { ideaId_plataforma: { ideaId: ideia.id, plataforma: params.plataforma } },
     });
     if (!script) return { ok: false, erro: "Esse conteúdo ainda não foi criado." };
+
+    // Refazer e trocar a duração são chamadas novas à IA, então custam como uma
+    // geração. É por isso que o botão "Refazer" não é de graça.
+    const conta = await obterConta(usuario.id);
+    if (!temSaldo(conta, CUSTO.CONTEUDO)) {
+      return { ok: false, erro: mensagemSemCredito(conta, CUSTO.CONTEUDO) };
+    }
 
     // Só aceita durações que a plataforma realmente oferece.
     const permitidas = PLATAFORMAS[params.plataforma].duracoes.map((d) => d.segundos);
@@ -222,6 +254,12 @@ export async function regerarConteudo(params: {
         versao: { increment: 1 },
         editadoPeloUsuario: false,
       },
+    });
+
+    await debitar({
+      userId: usuario.id,
+      custo: CUSTO.CONTEUDO,
+      motivo: `Roteiro refeito — ${PLATAFORMAS[params.plataforma].nome}: ${ideia.titulo}`,
     });
 
     revalidatePath(`/conteudo/${params.ideaId}`);

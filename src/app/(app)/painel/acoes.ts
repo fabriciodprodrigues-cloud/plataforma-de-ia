@@ -8,6 +8,13 @@ import { prisma } from "@/lib/prisma";
 import { traduzirErroIA } from "@/lib/ia/cliente";
 import { gerarTemas, refinarTemaProprio } from "@/lib/ia/temas";
 import { obterPesquisaDoNicho, pesquisarTema } from "@/lib/servicos/nicho";
+import { CUSTO } from "@/lib/planos";
+import {
+  debitar,
+  mensagemSemCredito,
+  obterConta,
+  temSaldo,
+} from "@/lib/servicos/creditos";
 
 export type Resultado<T = object> = ({ ok: true } & T) | { ok: false; erro: string };
 
@@ -32,10 +39,13 @@ async function contexto() {
  * depois é o mesmo, e é isso que faz os dois produzirem efeito visível.
  */
 async function gerarEGravarTemas(params: {
+  userId: string;
   nicheId: string;
   nomeNicho: string;
   nomeMarca: string;
   pesquisa: string;
+  /** Aparece no extrato de créditos do usuário. */
+  motivo: string;
 }): Promise<Resultado> {
   const existentes = await prisma.contentIdea.findMany({
     where: { nicheId: params.nicheId },
@@ -64,6 +74,12 @@ async function gerarEGravarTemas(params: {
     })),
   });
 
+  await debitar({
+    userId: params.userId,
+    custo: CUSTO.CONTEUDO,
+    motivo: params.motivo,
+  });
+
   revalidatePath("/painel");
   return { ok: true };
 }
@@ -73,16 +89,23 @@ export async function gerarMaisTemas(): Promise<Resultado> {
   try {
     const { usuario, nicho } = await contexto();
 
+    const conta = await obterConta(usuario.id);
+    if (!temSaldo(conta, CUSTO.CONTEUDO)) {
+      return { ok: false, erro: mensagemSemCredito(conta, CUSTO.CONTEUDO) };
+    }
+
     const pesquisa = await obterPesquisaDoNicho({
       nicheId: nicho.id,
       nomeNicho: nicho.nome,
     });
 
     return gerarEGravarTemas({
+      userId: usuario.id,
       nicheId: nicho.id,
       nomeNicho: nicho.nome,
       nomeMarca: usuario.brandKit?.nomeMarca ?? nicho.nome,
       pesquisa,
+      motivo: `Novos temas — ${nicho.nome}`,
     });
   } catch (erro) {
     return { ok: false, erro: traduzirErroIA(erro) };
@@ -102,6 +125,11 @@ export async function atualizarPesquisa(): Promise<Resultado> {
   try {
     const { usuario, nicho } = await contexto();
 
+    const conta = await obterConta(usuario.id);
+    if (!temSaldo(conta, CUSTO.CONTEUDO)) {
+      return { ok: false, erro: mensagemSemCredito(conta, CUSTO.CONTEUDO) };
+    }
+
     const pesquisa = await obterPesquisaDoNicho({
       nicheId: nicho.id,
       nomeNicho: nicho.nome,
@@ -109,10 +137,12 @@ export async function atualizarPesquisa(): Promise<Resultado> {
     });
 
     return gerarEGravarTemas({
+      userId: usuario.id,
       nicheId: nicho.id,
       nomeNicho: nicho.nome,
       nomeMarca: usuario.brandKit?.nomeMarca ?? nicho.nome,
       pesquisa,
+      motivo: `Pesquisa atualizada — ${nicho.nome}`,
     });
   } catch (erro) {
     return { ok: false, erro: traduzirErroIA(erro) };
@@ -136,7 +166,12 @@ export async function criarTemaProprio(
   const termo = validado.data;
 
   try {
-    const { nicho } = await contexto();
+    const { usuario, nicho } = await contexto();
+
+    const conta = await obterConta(usuario.id);
+    if (!temSaldo(conta, CUSTO.CONTEUDO)) {
+      return { ok: false, erro: mensagemSemCredito(conta, CUSTO.CONTEUDO) };
+    }
 
     const pesquisa = await pesquisarTema({
       nicheId: nicho.id,
@@ -157,6 +192,12 @@ export async function criarTemaProprio(
         justificativa: tema.justificativa,
         status: StatusIdeia.PERSONALIZADO,
       },
+    });
+
+    await debitar({
+      userId: usuario.id,
+      custo: CUSTO.CONTEUDO,
+      motivo: `Tema próprio — ${tema.titulo}`,
     });
 
     revalidatePath("/painel");

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Clock, Copy, LoaderCircle, RefreshCw, Video } from "lucide-react";
+import { Check, Clock, Copy, Lock, LoaderCircle, RefreshCw, Video } from "lucide-react";
 import { regerarConteudo, salvarConteudo } from "./acoes";
 import { Teleprompter } from "./teleprompter";
 import type { DadosPlataforma } from "./tipos";
@@ -9,16 +9,20 @@ import { Alerta } from "@/components/ui/alerta";
 import { Botao } from "@/components/ui/botao";
 import { GATILHOS, infoArquetipo } from "@/lib/arquetipos";
 import { PLATAFORMAS } from "@/lib/constants";
+import { mensagemUpgrade } from "@/lib/planos";
 import { useAutoSalvar } from "@/lib/hooks/use-auto-salvar";
 import { cn } from "@/lib/utils";
 
 export function SecaoRoteiro({
   ideaId,
   dados,
+  temTeleprompter,
   aoAtualizar,
 }: {
   ideaId: string;
   dados: DadosPlataforma;
+  /** Trava de plano: quem não tem vê o convite de upgrade, não o teleprompter. */
+  temTeleprompter: boolean;
   aoAtualizar: (mudanca: Partial<DadosPlataforma>) => void;
 }) {
   const meta = PLATAFORMAS[dados.plataforma];
@@ -27,6 +31,7 @@ export function SecaoRoteiro({
   const [erro, setErro] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
   const [teleprompter, setTeleprompter] = useState(false);
+  const [bloqueio, setBloqueio] = useState(false);
   const [regerando, regerar] = useTransition();
 
   const { estado: estadoSalvamento, erro: erroSalvamento } = useAutoSalvar(
@@ -106,8 +111,20 @@ export function SecaoRoteiro({
               </>
             )}
           </Botao>
-          <Botao variante="secundario" onClick={() => setTeleprompter(true)}>
-            <Video className="size-4" aria-hidden />
+          {/* O botão continua visível para quem não tem o recurso, com cadeado.
+              Esconder por completo economizaria uma linha de código e custaria o
+              único momento em que faz sentido oferecer o upgrade: quando a
+              pessoa está prestes a gravar e precisaria dele. */}
+          <Botao
+            variante="secundario"
+            onClick={() => (temTeleprompter ? setTeleprompter(true) : setBloqueio(true))}
+            aria-describedby={temTeleprompter ? undefined : "aviso-teleprompter"}
+          >
+            {temTeleprompter ? (
+              <Video className="size-4" aria-hidden />
+            ) : (
+              <Lock className="size-4" aria-hidden />
+            )}
             Teleprompter
           </Botao>
           <Botao
@@ -181,6 +198,18 @@ export function SecaoRoteiro({
         </div>
       )}
 
+      {bloqueio && !temTeleprompter && (
+        <div className="mt-4" id="aviso-teleprompter">
+          <Alerta tom="info" titulo="Disponível em outro plano">
+            {mensagemUpgrade("teleprompter")} Ele rola o roteiro na tela enquanto
+            você grava, no ritmo da duração escolhida.{" "}
+            <a href="/plano" className="font-medium text-marca-700 underline">
+              Ver planos
+            </a>
+          </Alerta>
+        </div>
+      )}
+
       {erro && (
         <div className="mt-4">
           <Alerta tom="erro">{erro}</Alerta>
@@ -219,7 +248,7 @@ export function SecaoRoteiro({
         {estadoSalvamento === "salvando" && "Salvando..."}
         {estadoSalvamento === "salvo" && "Alterações salvas"}
       </p>
-      {teleprompter && (
+      {teleprompter && temTeleprompter && (
         <Teleprompter
           texto={dados.conteudo}
           duracaoSegundos={dados.duracaoSegundos}
