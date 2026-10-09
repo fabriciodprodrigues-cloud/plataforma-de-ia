@@ -33,8 +33,13 @@ function traduzirErro(mensagem: string): string {
     return "A senha precisa ter pelo menos 8 caracteres.";
   if (m.includes("rate limit") || m.includes("too many"))
     return "Muitas tentativas seguidas. Espere um minutinho e tente de novo.";
+  // Atenção: este código roda NO SERVIDOR. Se chegou até aqui, a internet do
+  // usuário está funcionando — foi o nosso servidor que não alcançou o
+  // Supabase. Mandar "verifique sua internet" fazia a pessoa reiniciar o
+  // roteador por uma queda que era nossa. Aconteceu de verdade, duas vezes,
+  // com o projeto do Supabase pausado por inatividade no plano gratuito.
   if (m.includes("fetch failed") || m.includes("network"))
-    return "Não conseguimos falar com o servidor. Verifique sua internet e tente de novo.";
+    return "Nosso serviço de login está fora do ar neste momento. Não é problema na sua conexão — já estamos vendo isso. Tente de novo em alguns minutos.";
   return "Não foi possível concluir agora. Tente novamente em instantes.";
 }
 
