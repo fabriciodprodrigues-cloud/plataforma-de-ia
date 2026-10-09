@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { TipoTransacao } from "@/generated/prisma/enums";
 import type { NomePlano } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
@@ -51,35 +52,52 @@ function somarMes(data: Date, meses: number): Date {
  * até as 9h do dia seguinte para recuperar o saldo. Como crédito de plano não
  * acumula, virar o ciclo tarde nunca tira nada de ninguém — só adia o ganho até
  * o momento em que o usuário volta, que é exatamente quando ele importa.
+ *
+ * Em `cache()`: o cabeçalho (no layout) e a página chamam isto na mesma
+ * renderização. Medido nesta base: o `cache()` do React vale na renderização e
+ * NÃO vale dentro de uma server action, e a renderização que vem depois de uma
+ * action recebe escopo novo — então cachear aqui não corre risco de mostrar
+ * saldo velho logo depois de um débito.
  */
-export async function obterConta(userId: string): Promise<Conta> {
+export const obterConta = cache(async (userId: string): Promise<Conta> => {
   const agora = new Date();
 
-  const assinatura = await prisma.subscription.upsert({
-    where: { userId },
-    update: {},
-    create: {
-      userId,
-      plano: PLANO_PADRAO,
-      inicioCiclo: agora,
-      proximoReset: somarMes(agora, 1),
-    },
-  });
+  // As duas leituras vão juntas: `$transaction` com array manda tudo numa ida
+  // só ao banco. Em sequência eram dois saltos até us-west-2, e o banco fica
+  // longe das funções, que rodam em São Paulo.
+  const [assinaturaExistente, saldoExistente] = await prisma.$transaction([
+    prisma.subscription.findUnique({ where: { userId } }),
+    prisma.creditBalance.findUnique({ where: { userId } }),
+  ]);
+
+  // O caminho comum é as duas linhas já existirem. Só quem acabou de se
+  // cadastrar paga a escrita — antes eram dois upsert em TODA leitura de
+  // página, ou seja, duas escritas no banco para não mudar nada.
+  const assinatura =
+    assinaturaExistente ??
+    (await prisma.subscription.create({
+      data: {
+        userId,
+        plano: PLANO_PADRAO,
+        inicioCiclo: agora,
+        proximoReset: somarMes(agora, 1),
+      },
+    }));
 
   const plano = PLANOS[assinatura.plano];
 
   // Conta nova já nasce com o saldo do mês; senão a primeira geração falharia
   // por falta de crédito logo depois do cadastro.
-  const saldo = await prisma.creditBalance.upsert({
-    where: { userId },
-    update: {},
-    create: {
-      userId,
-      saldoPlano: plano.creditosMensais,
-      saldoAvulso: 0,
-      minutosVideo: plano.minutosVideoMensais,
-    },
-  });
+  const saldo =
+    saldoExistente ??
+    (await prisma.creditBalance.create({
+      data: {
+        userId,
+        saldoPlano: plano.creditosMensais,
+        saldoAvulso: 0,
+        minutosVideo: plano.minutosVideoMensais,
+      },
+    }));
 
   if (assinatura.proximoReset > agora) {
     return {
@@ -137,7 +155,7 @@ export async function obterConta(userId: string): Promise<Conta> {
     minutosVideo: plano.minutosVideoMensais,
     proximoReset: proximo,
   };
-}
+});
 
 /** O plano do usuário libera esse recurso? */
 export function temRecurso(plano: NomePlano, recurso: Recurso): boolean {

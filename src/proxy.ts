@@ -10,12 +10,21 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 
 /** Rotas que exigem estar logado. */
-const ROTAS_PRIVADAS = ["/painel", "/onboarding", "/conteudo", "/marca"];
+const ROTAS_PRIVADAS = ["/painel", "/onboarding", "/conteudo", "/marca", "/plano"];
 /** Rotas de login/cadastro: quem já está logado não deveria ver. */
 const ROTAS_DE_ENTRADA = ["/entrar", "/cadastro"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
+
+  const caminho = request.nextUrl.pathname;
+  const ehPrivada = ROTAS_PRIVADAS.some((r) => caminho.startsWith(r));
+  const ehEntrada = ROTAS_DE_ENTRADA.some((r) => caminho.startsWith(r));
+
+  // Em rota que não é privada nem de entrada, saber quem está logado não muda
+  // nada — e `getUser()` é uma chamada de rede ao Supabase. A página inicial é
+  // estática e pagava esse salto à toa em cada visita.
+  if (!ehPrivada && !ehEntrada) return response;
 
   // Sem as chaves configuradas não dá para validar sessão nenhuma — deixamos passar
   // para o app conseguir subir e mostrar a mensagem de configuração na tela.
@@ -45,16 +54,14 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const caminho = request.nextUrl.pathname;
-
-  if (!user && ROTAS_PRIVADAS.some((r) => caminho.startsWith(r))) {
+  if (!user && ehPrivada) {
     const destino = request.nextUrl.clone();
     destino.pathname = "/entrar";
     destino.searchParams.set("proximo", caminho);
     return NextResponse.redirect(destino);
   }
 
-  if (user && ROTAS_DE_ENTRADA.some((r) => caminho.startsWith(r))) {
+  if (user && ehEntrada) {
     const destino = request.nextUrl.clone();
     destino.pathname = "/painel";
     destino.search = "";

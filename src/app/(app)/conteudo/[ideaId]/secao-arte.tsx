@@ -72,8 +72,6 @@ export function SecaoArte({
 
     setDesenhando(true);
     try {
-      await aguardarFontes();
-
       const [logo, foto] = await Promise.all([
         marca.logoUrl
           ? carregarImagem(viaProxy(marca.logoUrl)).catch(() => null)
@@ -94,6 +92,11 @@ export function SecaoArte({
         temLogo: Boolean(logo),
         temFoto: Boolean(foto),
       });
+
+      // Depois do layout, não antes: é ele que sabe QUAL família pedir. As
+      // fontes de marca carregam sob demanda, então esperar "as fontes da
+      // página" sem dizer qual resolveria na hora e desenharia na fonte errada.
+      await aguardarFontes(layout);
 
       desenharArte(canvas, layout, { logo, foto });
       setErro(null);

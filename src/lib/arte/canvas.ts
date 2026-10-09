@@ -189,13 +189,33 @@ export function carregarImagem(url: string): Promise<HTMLImageElement> {
   });
 }
 
-/** Espera as fontes da página estarem prontas antes de desenhar. */
-export async function aguardarFontes() {
-  if (typeof document !== "undefined" && "fonts" in document) {
-    try {
-      await document.fonts.ready;
-    } catch {
-      // Se o navegador não expuser a API, seguimos com a fonte padrão.
+/**
+ * Espera a fonte da arte estar carregada antes de desenhar.
+ *
+ * `document.fonts.ready` sozinho não basta: ele só espera as fontes que a
+ * página JÁ pediu. As fontes de marca são carregadas sob demanda (não têm
+ * preload, para não pesar 200KB em toda tela do app), então se o usuário baixar
+ * a arte antes de a prévia ter desenhado com aquela família, o `ready` resolve
+ * na hora — e o PNG sai na fonte do sistema.
+ *
+ * `document.fonts.load()` resolve isso: ele PEDE a família e só volta quando
+ * ela chega. Os dois pesos são os que o canvas usa — 700 no título e no logo,
+ * 400 no rodapé.
+ */
+export async function aguardarFontes(layout?: Layout) {
+  if (typeof document === "undefined" || !("fonts" in document)) return;
+
+  try {
+    if (layout) {
+      const familia = familiaDoCanvas(layout);
+      await Promise.all([
+        document.fonts.load(`700 48px ${familia}`),
+        document.fonts.load(`400 48px ${familia}`),
+      ]);
     }
+    await document.fonts.ready;
+  } catch {
+    // Navegador sem a API, ou família que ele não reconhece: seguimos com a
+    // fonte padrão em vez de travar o download.
   }
 }
