@@ -1,0 +1,65 @@
+# Mantém o projeto do Supabase acordado.
+#
+# Por que não o cron da Vercel: ele existe (vercel.json) e mesmo assim o projeto
+# pausou depois de 30 dias — ou seja, ou não rodou, ou rodou e falhou em
+# silêncio. No plano Hobby o log dura cerca de uma hora, então não dá para
+# auditar depois do fato. Aqui cada execução fica registrada na aba Actions,
+# com data, resultado e saída, por 90 dias.
+#
+# O plano gratuito do Supabase pausa projetos com pouca atividade numa janela de
+# 7 dias, e "alguns pedidos ao banco por dia" bastam. Quatro por dia dá folga de
+# sobra para um dia inteiro de falha passar batido sem consequência.
+#
+# Atenção: o GitHub desativa workflows agendados depois de 60 dias SEM NENHUM
+# commit no repositório (ele avisa por e-mail antes). Se o projeto ficar parado
+# tanto tempo, reative na aba Actions — é um botão.
+
+name: Manter Supabase vivo
+
+on:
+  schedule:
+    # A cada 6 horas. O agendador do GitHub atrasa sob carga; para um ping
+    # diário isso é irrelevante, e é justamente por isso que são quatro e não um.
+    - cron: "0 */6 * * *"
+  # Permite rodar na mão pelo botão "Run workflow", para testar sem esperar.
+  workflow_dispatch:
+
+# Se uma execução ficar presa, a próxima não enfileira atrás dela.
+concurrency:
+  group: manter-supabase-vivo
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Tocar no banco pelo endpoint da aplicação
+        run: |
+          URL="https://ia.volucks.com/api/manter-vivo"
+
+          # Três tentativas: função fria na Vercel somada a conexão fria no
+          # Postgres pode estourar o tempo uma vez sem que nada esteja errado.
+          # Só falha de verdade se as três falharem — assim o e-mail de erro
+          # significa alguma coisa em vez de virar ruído que se aprende a ignorar.
+          for tentativa in 1 2 3; do
+            echo "::group::Tentativa $tentativa"
+            CORPO=$(curl -sS --max-time 60 -w "\n%{http_code}" "$URL" || echo -e "\n000")
+            CODIGO=$(echo "$CORPO" | tail -n1)
+            echo "$CORPO" | sed '$d'
+            echo "HTTP $CODIGO"
+            echo "::endgroup::"
+
+            if [ "$CODIGO" = "200" ]; then
+              echo "OK — o banco respondeu."
+              exit 0
+            fi
+
+            if [ "$tentativa" -lt 3 ]; then
+              echo "Falhou com HTTP $CODIGO. Nova tentativa em 30s..."
+              sleep 30
+            fi
+          done
+
+          echo "::error::O banco nao respondeu em 3 tentativas (ultimo HTTP $CODIGO). O projeto do Supabase pode estar pausado: https://supabase.com/dashboard"
+          exit 1
