@@ -87,6 +87,8 @@ model User {
   papel               PapelUsuario @default(USER)
   /// Nulo = ativo. Preenchido = suspenso pelo admin, com a data.
   suspensoEm          DateTime?    @map("suspenso_em")
+  /// Cliente correspondente no Asaas. Criado na primeira cobrança.
+  asaasClienteId      String?      @unique @map("asaas_cliente_id")
   criadoEm            DateTime @default(now()) @map("criado_em")
 
   brandKit            BrandKit?
@@ -300,9 +302,6 @@ model Plan {
   /// O card com a borda ciano na landing.
   destaque      Boolean @default(false)
 
-  stripeProductId String? @map("stripe_product_id")
-  stripePriceId   String? @map("stripe_price_id")
-
   criadoEm     DateTime @default(now()) @map("criado_em")
   atualizadoEm DateTime @updatedAt @map("atualizado_em")
 
@@ -323,9 +322,6 @@ model CreditPack {
   tipo          String  @default("credito") // "credito" | "minuto_video"
   ativo         Boolean @default(true)
   ordemExibicao Int     @default(0) @map("ordem_exibicao")
-
-  stripeProductId String? @map("stripe_product_id")
-  stripePriceId   String? @map("stripe_price_id")
 
   criadoEm     DateTime @default(now()) @map("criado_em")
   atualizadoEm DateTime @updatedAt @map("atualizado_em")
@@ -372,7 +368,10 @@ model Payment {
   id     String @id @default(uuid()) @db.Uuid
   userId String @map("user_id") @db.Uuid
   /// Único: reprocessar o mesmo evento não pode duplicar pagamento nem crédito.
-  stripeEventId String @unique @map("stripe_event_id")
+  asaasEventoId String @unique @map("asaas_evento_id")
+  /// Id da COBRANÇA. Dois eventos diferentes (CONFIRMED e RECEIVED) falam da
+  /// mesma cobrança — sem este campo, ela entraria duas vezes na receita.
+  asaasCobrancaId String? @map("asaas_cobranca_id")
   tipo          String
   descricao     String
   /// Negativo em reembolso.
@@ -417,7 +416,7 @@ model Subscription {
   /// Downgrade vale só no próximo ciclo, para não tirar crédito já pago.
   /// Até lá o plano novo fica esperando aqui.
   planoPendenteId      String? @map("plano_pendente_id") @db.Uuid
-  stripeSubscriptionId String? @map("stripe_subscription_id")
+  asaasAssinaturaId    String? @map("asaas_assinatura_id")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   plan Plan @relation(fields: [planId], references: [id])
