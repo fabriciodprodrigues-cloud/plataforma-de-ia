@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Volucks IA — conteúdo pronto para cada rede</title>
+<meta name="description" content="Pesquisa de nicho, roteiro, arte com o seu logo e SEO prontos para Instagram, YouTube, TikTok e LinkedIn. Em poucos minutos.">
+<meta name="theme-color" content="#080B20">
+<meta property="og:title" content="Volucks IA — conteúdo pronto para cada rede">
+<meta property="og:description" content="Você diz do que fala e onde publica. A gente pesquisa, escreve o roteiro, cria a arte com o seu logo e sugere as hashtags.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#080B20;
+    --surface:#0B1130;
+    --card:#0F1638;
+    --ink:#F5F7FF;
+    --ink-soft:#A3ACCF;
+    --ink-faint:#8791BB;
+    --line:rgba(255,255,255,0.09);
+    --line-strong:rgba(255,255,255,0.18);
+    --blue:#2647FF;
+    --blue-strong:#3C5CFF;
+    --cyan:#4CC9F0;
+    --cyan-soft:rgba(76,201,240,0.12);
+    --cyan-border:rgba(76,201,240,0.35);
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+  body{
+    margin:0;color:var(--ink);font-family:'Inter',system-ui,sans-serif;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(1000px 560px at 88% -8%, rgba(38,71,255,0.20), transparent 60%),
+      radial-gradient(760px 460px at -6% 10%, rgba(76,201,240,0.10), transparent 55%),
+      var(--bg);
+    background-repeat:no-repeat;
+  }
+  h1,h2,h3{font-family:'Space Grotesk',system-ui,sans-serif;margin:0;letter-spacing:-0.4px;line-height:1.12;}
+  p{margin:0;}
+  a{color:inherit;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .container{width:100%;max-width:1120px;margin:0 auto;padding:0 20px;}
+  .skip{position:absolute;left:-999px;top:8px;background:var(--cyan);color:#04202e;padding:8px 14px;border-radius:8px;z-index:100;font-weight:600;}
+  .skip:focus{left:12px;}
+  :focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:6px;}
+
+  /* ---------- fundo decorativo ---------- */
+  .bg-rings{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+  .bg-rings svg{position:absolute;opacity:.7;}
+  .bg-rings .a{top:-180px;right:-180px;}
+  .bg-rings .b{top:900px;left:-240px;}
+  main,header,footer{position:relative;z-index:1;}
+
+  /* ---------- nav ---------- */
+  .nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(8,11,32,0.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{display:flex;align-items:center;gap:28px;height:64px;}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.2px;}
+  .logo b{color:var(--cyan);font-weight:700;}
+  .nav-links{display:flex;gap:26px;margin-left:12px;}
+  .nav-links a{font-size:14px;color:var(--ink-soft);text-decoration:none;transition:color .15s;}
+  .nav-links a:hover{color:var(--ink);}
+  .nav-cta{margin-left:auto;display:flex;align-items:center;gap:10px;}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    font-family:inherit;font-size:15px;font-weight:600;text-decoration:none;
+    padding:13px 22px;border-radius:11px;border:1px solid transparent;cursor:pointer;transition:.15s;
+  }
+  .btn-primary{background:var(--blue);color:#fff;box-shadow:0 8px 28px -10px rgba(38,71,255,0.8);}
+  .btn-primary:hover{background:var(--blue-strong);transform:translateY(-1px);}
+  .btn-ghost{color:var(--ink);border-color:var(--line-strong);background:transparent;}
+  .btn-ghost:hover{border-color:var(--cyan-border);background:var(--cyan-soft);}
+  .btn-sm{padding:9px 16px;font-size:14px;border-radius:9px;}
+
+  /* ---------- hero ---------- */
+  .hero{padding:72px 0 40px;}
+  .hero-grid{display:grid;gap:56px;align-items:center;}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);
+    margin-bottom:22px;
+  }
+  .eyebrow::before{content:"//";color:var(--ink-faint);}
+  h1{font-size:clamp(36px,5.4vw,60px);font-weight:700;}
+  h1 .grad{
+    color:var(--cyan);
+    background:linear-gradient(95deg,var(--cyan),#7c93ff);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .hero-sub{margin-top:22px;font-size:clamp(16px,1.6vw,19px);color:var(--ink-soft);max-width:560px;}
+  .hero-actions{margin-top:34px;display:flex;flex-wrap:wrap;gap:12px;}
+  .redes{margin-top:34px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .redes span.lbl{font-size:13px;color:var(--ink-faint);margin-right:6px;}
+  .chip{
+    font-size:13px;padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+  }
+
+  /* mock do produto */
+  .mock{
+    background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;
+    box-shadow:0 40px 90px -40px rgba(0,0,0,0.8),0 0 0 1px rgba(255,255,255,0.02) inset;
+  }
+  .mock-bar{display:flex;align-items:center;gap:7px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface);}
+  .mock-bar i{width:9px;height:9px;border-radius:50%;background:var(--line-strong);}
+  .mock-bar span{margin-left:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);}
+  .mock-body{display:grid;gap:18px;padding:20px;}
+  .mock-label{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:var(--cyan);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .tag{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--cyan);background:var(--cyan-soft);border:1px solid var(--cyan-border);padding:3px 9px;border-radius:999px;}
+  .lines{display:grid;gap:9px;}
+  .lines i{display:block;height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(255,255,255,0.14),rgba(255,255,255,0.06));}
+  .lines i.h{height:11px;width:62%;background:rgba(255,255,255,0.26);margin-bottom:4px;}
+  .hash{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px;}
+  .hash span{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan);background:var(--cyan-soft);padding:4px 10px;border-radius:999px;}
+  .arts{display:flex;align-items:flex-end;gap:14px;}
+  .arts svg{display:block;border-radius:12px;box-shadow:0 18px 40px -18px rgba(0,0,0,0.7);}
+  .arts .thumb{flex:1.6;min-width:0;height:auto;}
+  .arts .post{flex:1;min-width:0;height:auto;}
+  .seo-score{margin-top:16px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-soft);}
+  .seo-score .bar{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .seo-score .bar i{display:block;height:100%;width:82%;background:linear-gradient(90deg,var(--blue),var(--cyan));}
+
+  /* ---------- seções ---------- */
+  .section{padding:84px 0;}
+  .section-head{max-width:640px;margin-bottom:46px;}
+  .kicker{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);margin-bottom:14px;}
+  .kicker::before{content:"// ";color:var(--ink-faint);}
+  h2{font-size:clamp(28px,3.6vw,42px);font-weight:700;}
+  .section-head p{margin-top:16px;color:var(--ink-soft);font-size:17px;}
+  section[id]{scroll-margin-top:72px;}
+
+  .steps{display:grid;gap:16px;}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:28px;}
+  .step .n{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--cyan);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+  .step .n::after{content:"";flex:1;height:1px;background:var(--line);}
+  .step h3{font-size:21px;margin-bottom:10px;}
+  .step p{color:var(--ink-soft);font-size:15px;}
+
+  .features{display:grid;gap:16px;}
+  .feat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;transition:border-color .2s,transform .2s;}
+  .feat:hover{border-color:var(--cyan-border);transform:translateY(-2px);}
+  .ico{
+    width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+    background:var(--cyan-soft);border:1px solid var(--cyan-border);color:var(--cyan);margin-bottom:18px;
+  }
+  .feat h3{font-size:18px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .feat p{color:var(--ink-soft);font-size:14.5px;}
+  .soon{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#FBBF24;border:1px solid rgba(251,191,36,.4);background:rgba(251,191,36,.08);padding:2px 8px;border-radius:999px;}
+
+  .plans{display:grid;gap:16px;align-items:stretch;}
+  .plan{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:30px;display:flex;flex-direction:column;}
+  .plan.destaque{border-color:var(--cyan-border);box-shadow:0 0 0 1px var(--cyan-border),0 30px 70px -40px rgba(38,71,255,0.9);}
+  .plan h3{font-size:24px;}
+  .plan .tag-line{color:var(--ink-soft);font-size:14.5px;margin-top:8px;min-height:44px;}
+  .plan-price{margin:22px 0 4px;font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;}
+  .plan-price small{font-family:'Inter',sans-serif;font-size:14px;font-weight:400;color:var(--ink-faint);}
+  .plan ul{list-style:none;padding:0;margin:22px 0 28px;display:grid;gap:12px;flex:1;border-top:1px solid var(--line);padding-top:22px;}
+  .plan li{display:flex;gap:11px;font-size:14.5px;color:var(--ink);align-items:flex-start;}
+  .plan li svg{flex:none;margin-top:3px;color:var(--cyan);}
+  .plan li.off{color:var(--ink-faint);}
+  .plan li.off svg{color:var(--ink-faint);opacity:.6;}
+  .plan .btn{width:100%;}
+  .plans-note{margin-top:22px;color:var(--ink-faint);font-size:13.5px;text-align:center;}
+
+  .faq{max-width:760px;display:grid;gap:12px;}
+  details{background:var(--card);border:1px solid var(--line);border-radius:14px;transition:border-color .2s;}
+  details[open]{border-color:var(--cyan-border);}
+  summary{list-style:none;cursor:pointer;padding:20px 24px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:17px;display:flex;justify-content:space-between;align-items:center;gap:16px;}
+  summary::-webkit-details-marker{display:none;}
+  summary::after{content:"+";font-family:'JetBrains Mono',monospace;color:var(--cyan);font-size:20px;flex:none;transition:transform .2s;}
+  details[open] summary::after{transform:rotate(45deg);}
+  details p{padding:0 24px 22px;color:var(--ink-soft);font-size:15px;max-width:640px;}
+
+  .cta-final{
+    text-align:center;padding:64px 24px;border-radius:24px;border:1px solid var(--cyan-border);
+    background:radial-gradient(600px 260px at 50% 0%,rgba(38,71,255,0.28),transparent 70%),var(--card);
+  }
+  .cta-final h2{max-width:620px;margin:0 auto;}
+  .cta-final p{margin:18px auto 30px;color:var(--ink-soft);max-width:480px;font-size:17px;}
+
+  footer{border-top:1px solid var(--line);margin-top:84px;padding:36px 0 48px;}
+  .foot{display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;align-items:center;color:var(--ink-faint);font-size:14px;}
+  .foot nav{display:flex;gap:22px;}
+  .foot a{text-decoration:none;color:var(--ink-soft);}
+  .foot a:hover{color:var(--ink);}
+
+  /* animação de entrada (só quando JS ativo) */
+  .js .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease;}
+  .js .reveal.in{opacity:1;transform:none;}
+  @media (prefers-reduced-motion:reduce){.js .reveal{opacity:1;transform:none;transition:none;}}
+
+  /* ---------- responsivo ---------- */
+  @media (min-width:700px){
+    .steps,.features,.plans{grid-template-columns:repeat(2,1fr);}
+    .mock-body{grid-template-columns:1fr;}
+  }
+  @media (min-width:980px){
+    .hero{padding:96px 0 56px;}
+    .hero-grid{grid-template-columns:1.05fr .95fr;}
+    .steps{grid-template-columns:repeat(3,1fr);}
+    .features{grid-template-columns:repeat(3,1fr);}
+    .plans{grid-template-columns:repeat(3,1fr);}
+  }
+  @media (max-width:760px){
+    .nav-links{display:none;}
+    .nav-inner{gap:12px;}
+    .btn-ghost.hide-sm{display:none;}
+    .section{padding:64px 0;}
+    .step,.feat,.plan{padding:22px;}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#conteudo">Pular para o conteúdo</a>
+
+<div class="bg-rings" aria-hidden="true">
+  <svg class="a" width="560" height="560" viewBox="0 0 560 560" fill="none">
+    <circle cx="280" cy="280" r="230" stroke="rgba(76,201,240,0.10)"/>
+    <circle cx="280" cy="280" r="160" stroke="rgba(76,201,240,0.14)"/>
+    <circle cx="280" cy="280" r="90" stroke="rgba(38,71,255,0.18)"/>
+  </svg>
+  <svg class="b" width="480" height="480" viewBox="0 0 480 480" fill="none">
+    <circle cx="240" cy="240" r="200" stroke="rgba(38,71,255,0.10)"/>
+    <circle cx="240" cy="240" r="130" stroke="rgba(76,201,240,0.08)"/>
+  </svg>
+</div>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="logo" href="#topo" aria-label="Volucks IA — início">
+      <svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true">
+        <line x1="20" y1="20" x2="35" y2="50" stroke="#2647FF" stroke-width="5" stroke-linecap="round"/>
+        <line x1="35" y1="50" x2="50" y2="82" stroke="#2647FF" stroke-width="5" stroke-linecap="round"/>
+        <line x1="80" y1="20" x2="65" y2="50" stroke="#2647FF" stroke-width="5" stroke-linecap="round"/>
+        <line x1="65" y1="50" x2="50" y2="82" stroke="#2647FF" stroke-width="5" stroke-linecap="round"/>
+        <line x1="35" y1="50" x2="65" y2="50" stroke="#4CC9F0" stroke-width="2.5"/>
+        <circle cx="20" cy="20" r="6" fill="#2647FF"/><circle cx="80" cy="20" r="6" fill="#2647FF"/>
+        <circle cx="35" cy="50" r="5" fill="#4CC9F0"/><circle cx="65" cy="50" r="5" fill="#4CC9F0"/>
+        <circle cx="50" cy="82" r="7" fill="#2647FF"/>
+      </svg>
+      <span>VOLUCKS <b>IA</b></span>
+    </a>
+    <nav class="nav-links" aria-label="Seções da página">
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#recursos">Recursos</a>
+      <a href="#planos">Planos</a>
+      <a href="#faq">Dúvidas</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-ghost btn-sm hide-sm" href="https://ia.volucks.com/entrar">Entrar</a>
+      <a class="btn btn-primary btn-sm" href="https://ia.volucks.com/cadastro">Começar agora</a>
+    </div>
+  </div>
+</header>
+
+<main id="conteudo">
+
+  <!-- HERO -->
+  <section class="hero" id="topo">
+    <div class="container hero-grid">
+      <div class="reveal">
+        <div class="eyebrow">Feito pra quem não tem tempo de criar conteúdo</div>
+        <h1>Conteúdo pronto para publicar, <span class="grad">adaptado para cada rede social.</span></h1>
+        <p class="hero-sub">Você diz do que fala e onde publica. A gente pesquisa o assunto, escreve o roteiro, cria a arte com o seu logo e sugere as hashtags. Em poucos minutos.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://ia.volucks.com/cadastro">Começar agora</a>
+          <a class="btn btn-ghost" href="https://ia.volucks.com/entrar">Já tenho conta</a>
+        </div>
+        <div class="redes" aria-label="Redes sociais atendidas">
+          <span class="lbl">Para</span>
+          <span class="chip">Instagram</span><span class="chip">YouTube</span><span class="chip">TikTok</span><span class="chip">LinkedIn</span>
+        </div>
+      </div>
+
+      <div class="reveal" aria-hidden="true">
+        <div class="mock">
+          <div class="mock-bar"><i></i><i></i><i></i><span>exemplo · Doceria da Ana · confeitaria artesanal</span></div>
+          <div class="mock-body">
+            <div>
+              <div class="mock-label">ROTEIRO · YOUTUBE <span class="tag">gancho: desafio</span></div>
+              <div class="lines"><i class="h"></i><i style="width:96%"></i><i style="width:88%"></i><i style="width:92%"></i><i style="width:54%"></i></div>
+              <div class="hash"><span>#confeitaria</span><span>#doces</span><span>#empreendedorismo</span></div>
+              <div class="seo-score"><span>SEO</span><div class="bar"><i></i></div><span class="mono">82</span></div>
+            </div>
+            <div>
+              <div class="mock-label">ARTES NO TAMANHO DE CADA REDE</div>
+              <div class="arts">
+                <svg class="thumb" viewBox="0 0 320 180">
+                  <rect width="320" height="180" rx="12" fill="#C65D3B"/>
+                  <rect x="10" y="10" width="300" height="160" rx="8" fill="none" stroke="#fff" stroke-opacity=".35"/>
+                  <text x="22" y="78" fill="#fff" font-size="27" font-weight="700" font-family="Space Grotesk,sans-serif"><tspan fill="#FFD166">3</tspan> erros que</text>
+                  <text x="22" y="110" fill="#fff" font-size="27" font-weight="700" font-family="Space Grotesk,sans-serif">iniciantes cometem</text>
+                  <text x="22" y="158" fill="#fff" fill-opacity=".85" font-size="10" font-family="Inter,sans-serif">Doceria da Ana · YouTube</text>
+                  <circle cx="288" cy="32" r="14" fill="#fff" fill-opacity=".92"/>
+                  <text x="288" y="37" text-anchor="middle" fill="#C65D3B" font-size="14" font-weight="700" font-family="Space Grotesk,sans-serif">D</text>
+                </svg>
+                <svg class="post" viewBox="0 0 200 250">
+                  <rect width="200" height="250" rx="12" fill="#2C4A7C"/>
+                  <rect x="9" y="9" width="182" height="232" rx="8" fill="none" stroke="#fff" stroke-opacity=".35"/>
+                  <rect x="18" y="18" width="72" height="18" rx="9" fill="#fff" fill-opacity=".16"/>
+                  <text x="54" y="31" text-anchor="middle" fill="#fff" font-size="8.5" font-family="JetBrains Mono,monospace">INSTAGRAM</text>
+                  <text x="18" y="188" fill="#fff" font-size="17" font-weight="600" font-family="Space Grotesk,sans-serif">O que ninguém</text>
+                  <text x="18" y="210" fill="#fff" font-size="17" font-weight="600" font-family="Space Grotesk,sans-serif">te conta sobre</text>
+                  <text x="18" y="231" fill="#fff" fill-opacity=".85" font-size="9" font-family="Inter,sans-serif">Doceria da Ana</text>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section class="section" id="como-funciona">
+    <div class="container">
+      <div class="section-head reveal">
+        <div class="kicker">Como funciona</div>
+        <h2>Do zero ao conteúdo pronto em três passos.</h2>
+        <p>Sem precisar de designer, roteirista ou editor. Você só conta sobre o seu negócio uma vez.</p>
+      </div>
+      <div class="steps">
+        <article class="step reveal">
+          <div class="n">01</div>
+          <h3>Conte sobre o seu negócio</h3>
+          <p>Nome, nicho, as redes onde você publica e o seu logo. A gente identifica as cores da sua marca e ajusta o tom de voz com um quiz rápido.</p>
+        </article>
+        <article class="step reveal">
+          <div class="n">02</div>
+          <h3>A IA pesquisa e cria</h3>
+          <p>Temas que fazem sentido pro seu nicho, roteiro ou legenda pra cada rede, arte no tamanho certo e sugestões de título e hashtags.</p>
+        </article>
+        <article class="step reveal">
+          <div class="n">03</div>
+          <h3>Grave, ajuste e publique</h3>
+          <p>Edite qualquer texto antes de usar, leia o roteiro no teleprompter enquanto grava e baixe as artes prontas.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECURSOS -->
+  <section class="section" id="recursos">
+    <div class="container">
+      <div class="section-head reveal">
+        <div class="kicker">Recursos</div>
+        <h2>Tudo que um conteúdo precisa, no mesmo lugar.</h2>
+      </div>
+      <div class="features">
+        <article class="feat reveal">
+          <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+          <h3>Pesquisa do seu nicho</h3>
+          <p>A gente acompanha o que está em alta no seu assunto e traz ideias que fazem sentido pra você.</p>
+        </article>
+        <article class="feat reveal">
+          <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M9 12h6M9 16h6"/></svg></div>
+          <h3>Roteiro e legenda prontos</h3>
+          <p>Cada rede recebe um texto pensado pra ela — nada de copiar e colar a mesma coisa em todo lugar.</p>
+        </article>
+        <article class="feat reveal">
+          <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5.5-5.5L6 19"/></svg></div>
+          <h3>Arte com a sua cara</h3>
+          <p>Capas e posts no tamanho certo de cada rede, com o seu logo e as suas cores.</p>
+        </article>
+        <article class="feat reveal">
+          <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h14M5 15h14M10 4 8 20M16 4l-2 16"/></svg></div>
+          <h3>Título e hashtags</h3>
+          <p>Sugestões de título, descrição e hashtags pra sua publicação ser encontrada.</p>
+        </article>
+        <article class="feat reveal">
+          <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></div>
+          <h3>Texto com o seu jeito de falar</h3>
+          <p>Um quiz rápido descobre o perfil da sua marca, e o gancho e o convite final de cada roteiro seguem esse tom.</p>
+        </article>
+        <article class="feat reveal">
+          <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M7 8h10M7 11h7"/></svg></div>
+          <h3>Teleprompter embutido</h3>
+          <p>Leia o roteiro na tela enquanto grava, com rolagem no ritmo da duração que você escolheu.</p>
+        </article>
+        <article class="feat reveal">
+          <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg></div>
+          <h3>Editor de vídeo com IA <span class="soon">em breve</span></h3>
+          <p>Cortes automáticos, legendas animadas e cards de destaque no seu vídeo gravado.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLANOS -->
+  <section class="section" id="planos">
+    <div class="container">
+      <div class="section-head reveal">
+        <div class="kicker">Planos</div>
+        <h2>Comece simples. Evolua quando precisar.</h2>
+        <p>Três módulos, cada um com a sua cota de créditos. Acabou o saldo do mês? Compre um pacote avulso, sem trocar de plano.</p>
+      </div>
+      <div class="plans">
+
+        <article class="plan reveal">
+          <h3>Essencial</h3>
+          <p class="tag-line">Texto e arte para começar a publicar com consistência.</p>
+          <!-- PREÇO: quando definir, descomente e ajuste
+          <div class="plan-price">R$ 00<small>/mês</small></div> -->
+          <ul>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Roteiros e legendas por rede</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Artes com o seu logo e cores</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Título e hashtags automáticos</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Cota mensal de créditos</li>
+            <li class="off"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg>Teleprompter</li>
+          </ul>
+          <a class="btn btn-ghost" href="https://ia.volucks.com/cadastro">Escolher Essencial</a>
+        </article>
+
+        <article class="plan destaque reveal">
+          <h3>Criador</h3>
+          <p class="tag-line">Mais volume e as ferramentas para gravar com segurança.</p>
+          <!-- PREÇO: quando definir, descomente e ajuste
+          <div class="plan-price">R$ 00<small>/mês</small></div> -->
+          <ul>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Tudo do Essencial</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Teleprompter embutido</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Banco de imagens para as artes</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Até 3 redes ao mesmo tempo</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Cota de créditos maior</li>
+          </ul>
+          <a class="btn btn-primary" href="https://ia.volucks.com/cadastro">Escolher Criador</a>
+        </article>
+
+        <article class="plan reveal">
+          <h3>Completo</h3>
+          <p class="tag-line">Tudo da plataforma, incluindo a edição de vídeo.</p>
+          <!-- PREÇO: quando definir, descomente e ajuste
+          <div class="plan-price">R$ 00<small>/mês</small></div> -->
+          <ul>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Tudo do Criador</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Redes ilimitadas</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Editor de vídeo com IA <span class="soon">em breve</span></li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>Maior cota de créditos e minutos de vídeo</li>
+          </ul>
+          <a class="btn btn-ghost" href="https://ia.volucks.com/cadastro">Escolher Completo</a>
+        </article>
+
+      </div>
+      <p class="plans-note">Você escolhe o plano ao criar a conta e pode trocar depois.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" id="faq">
+    <div class="container">
+      <div class="section-head reveal">
+        <div class="kicker">Dúvidas</div>
+        <h2>Perguntas frequentes.</h2>
+      </div>
+      <div class="faq reveal">
+        <details>
+          <summary>Preciso entender de edição ou design?</summary>
+          <p>Não. As artes saem prontas com o seu logo e as suas cores, e todo texto gerado pode ser editado por você antes de usar.</p>
+        </details>
+        <details>
+          <summary>As artes são geradas por IA?</summary>
+          <p>A IA monta o layout da arte (texto, cores e posição do logo), e você pode usar uma foto sua ou de um banco de imagens. A gente não cria imagens realistas do zero — isso mantém a arte sempre com a cara da sua marca.</p>
+        </details>
+        <details>
+          <summary>O que são créditos?</summary>
+          <p>Cada roteiro ou arte gerada usa créditos da cota do seu plano. Se acabarem antes do fim do mês, você pode comprar um pacote avulso, sem precisar trocar de plano.</p>
+        </details>
+        <details>
+          <summary>A pesquisa do meu nicho é compartilhada com outras pessoas?</summary>
+          <p>Não. A pesquisa e o histórico do seu nicho ficam ligados só à sua conta, mesmo que outra pessoa trabalhe com o mesmo assunto que você.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="section" style="padding-top:20px">
+    <div class="container">
+      <div class="cta-final reveal">
+        <h2>Comece a criar conteúdo hoje.</h2>
+        <p>Crie sua conta em poucos minutos e gere o primeiro tema do seu nicho.</p>
+        <a class="btn btn-primary" href="https://ia.volucks.com/cadastro">Criar minha conta</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container foot">
+    <div>© <span id="ano">2026</span> Volucks. Todos os direitos reservados.</div>
+    <nav aria-label="Rodapé">
+      <a href="https://ia.volucks.com/entrar">Entrar</a>
+      <a href="https://ia.volucks.com/cadastro">Criar conta</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  document.documentElement.classList.add('js');
+  document.getElementById('ano').textContent = new Date().getFullYear();
+
+  (function(){
+    var els = document.querySelectorAll('.reveal');
+    if(!('IntersectionObserver' in window)){ els.forEach(function(e){ e.classList.add('in'); }); return; }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
+      });
+    }, {threshold:0.12, rootMargin:'0px 0px -40px 0px'});
+    els.forEach(function(e){ io.observe(e); });
+  })();
+</script>
+</body>
+</html>

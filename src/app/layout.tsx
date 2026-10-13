@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import {
   Fraunces,
   Inter,
+  JetBrains_Mono,
   Space_Grotesk,
   Montserrat,
   Playfair_Display,
@@ -33,6 +34,17 @@ const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
   display: "swap",
 });
+// Rótulos e números: eyebrow da landing, cabeçalho de tabela, KPI do admin.
+// Sem preload de propósito — são textos curtos, onde o `swap` não incomoda, e
+// as telas internas do app não usam mono nenhuma. Não vale 20KB em toda página
+// por causa de uma linha de 12px.
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+  preload: false,
+});
+
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "600", "700"],
@@ -77,7 +89,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="pt-BR"
-      className={`${inter.variable} ${spaceGrotesk.variable} ${poppins.variable} ${montserrat.variable} ${playfair.variable} ${fraunces.variable}`}
+      className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${poppins.variable} ${montserrat.variable} ${playfair.variable} ${fraunces.variable}`}
     >
       <body className="font-sans min-h-dvh">
         <AvisoConfiguracao />

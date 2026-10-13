@@ -82,6 +82,11 @@ model User {
   email               String   @unique
   nome                String?
   onboardingConcluido Boolean  @default(false) @map("onboarding_concluido")
+  /// Só existe um ADMIN_MASTER, criado por seed a partir de ADMIN_MASTER_EMAIL.
+  /// Não há tela pública para virar admin.
+  papel               PapelUsuario @default(USER)
+  /// Nulo = ativo. Preenchido = suspenso pelo admin, com a data.
+  suspensoEm          DateTime?    @map("suspenso_em")
   criadoEm            DateTime @default(now()) @map("criado_em")
 
   brandKit            BrandKit?
@@ -91,6 +96,8 @@ model User {
   subscription        Subscription?
   creditBalance       CreditBalance?
   creditTransactions  CreditTransaction[]
+  payments            Payment[]
+  acoesDeAdmin        AdminAuditLog[]
 
   @@map("users")
 }
@@ -248,10 +255,136 @@ model SeoMetadata {
 
 /// Os três módulos comerciais. O catálogo (preço, cota, recursos) vive em
 /// src/lib/planos.ts — aqui guardamos só qual deles o usuário assinou.
-enum NomePlano {
-  ESSENCIAL
-  CRIADOR
-  COMPLETO
+/// Papel do usuário. Só existem dois: cliente e dono da plataforma.
+/// Papéis intermediários ficam fora de propósito — nada hoje precisa deles, e
+/// permissão granular é fácil de adicionar e cara de remover.
+enum PapelUsuario {
+  USER
+  ADMIN_MASTER
+}
+
+enum StatusPagamento {
+  PAGO
+  PENDENTE
+  FALHOU
+  REEMBOLSADO
+}
+
+/// Catálogo comercial. Virou tabela quando o painel admin passou a existir:
+/// antes morava em src/lib/planos.ts, porque sem tela de administração mudar
+/// preço pelo banco significava SQL na mão. Com o admin, o dono cria e arquiva
+/// planos sozinho e a landing acompanha — o que exige o banco.
+model Plan {
+  id   String @id @default(uuid()) @db.Uuid
+  /// Usado na URL (/cadastro?plano=criador). Estável mesmo se o nome mudar.
+  slug String @unique
+  nome String
+  /// A frase de vitrine na landing.
+  descricao String
+
+  /// Em centavos. Dinheiro nunca em float.
+  precoCentavos       Int @map("preco_centavos")
+  creditosMensais     Int @map("creditos_mensais")
+  minutosVideoMensais Int @default(0) @map("minutos_video_mensais")
+  /// 0 significa ilimitadas.
+  maxPlataformas      Int @map("max_plataformas")
+
+  temTeleprompter Boolean @default(false) @map("tem_teleprompter")
+  temBancoImagens Boolean @default(false) @map("tem_banco_imagens")
+  temVideo        Boolean @default(false) @map("tem_video")
+
+  /// Arquivado (false) some da landing e de novos cadastros, mas continua
+  /// valendo para quem já assina. Plano com usuário nunca é excluído.
+  ativo         Boolean @default(true)
+  ordemExibicao Int     @default(0) @map("ordem_exibicao")
+  /// O card com a borda ciano na landing.
+  destaque      Boolean @default(false)
+
+  stripeProductId String? @map("stripe_product_id")
+  stripePriceId   String? @map("stripe_price_id")
+
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+  subscriptions Subscription[]
+
+  @@index([ativo, ordemExibicao])
+  @@map("plans")
+}
+
+/// Pacotes avulsos de crédito. Mesma lógica do Plan: catálogo editável.
+model CreditPack {
+  id            String  @id @default(uuid()) @db.Uuid
+  slug          String  @unique
+  nome          String
+  /// Créditos, ou minutos de vídeo quando `tipo` é MINUTO_VIDEO.
+  quantidade    Int
+  precoCentavos Int     @map("preco_centavos")
+  tipo          String  @default("credito") // "credito" | "minuto_video"
+  ativo         Boolean @default(true)
+  ordemExibicao Int     @default(0) @map("ordem_exibicao")
+
+  stripeProductId String? @map("stripe_product_id")
+  stripePriceId   String? @map("stripe_price_id")
+
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+  @@map("credit_packs")
+}
+
+/// Configuração da plataforma, com vigência.
+///
+/// Guardar `vigenteDesde` em vez de sobrescrever é o que permite recalcular
+/// custo de um consumo antigo com o preço que valia naquele dia. Sem isso,
+/// mudar o custo por crédito reescreveria o histórico financeiro inteiro.
+model PlatformSetting {
+  id           String   @id @default(uuid()) @db.Uuid
+  chave        String
+  valorJson    Json     @map("valor_json")
+  vigenteDesde DateTime @default(now()) @map("vigente_desde")
+  criadoEm     DateTime @default(now()) @map("criado_em")
+
+  @@unique([chave, vigenteDesde])
+  @@index([chave, vigenteDesde])
+  @@map("platform_settings")
+}
+
+/// Toda escrita do admin, com o estado antes e depois. Sem exceção.
+model AdminAuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  adminId   String   @map("admin_id") @db.Uuid
+  acao      String
+  alvoTipo  String   @map("alvo_tipo")
+  alvoId    String?  @map("alvo_id")
+  antesJson Json?    @map("antes_json")
+  depoisJson Json?   @map("depois_json")
+  criadoEm  DateTime @default(now()) @map("criado_em")
+
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([criadoEm])
+  @@map("admin_audit_log")
+}
+
+/// Receita. Alimentada SÓ por webhook do Stripe — nunca por clique ou front.
+model Payment {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  /// Único: reprocessar o mesmo evento não pode duplicar pagamento nem crédito.
+  stripeEventId String @unique @map("stripe_event_id")
+  tipo          String
+  descricao     String
+  /// Negativo em reembolso.
+  valorCentavos Int             @map("valor_centavos")
+  moeda         String          @default("BRL")
+  status        StatusPagamento
+  criadoEm      DateTime        @default(now()) @map("criado_em")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([criadoEm, status])
+  @@map("payments")
 }
 
 enum StatusAssinatura {
@@ -264,21 +397,32 @@ enum TipoTransacao {
   CONSUMO
   RESET_MENSAL
   COMPRA_AVULSA
+  /// Crédito dado ou retirado à mão pelo admin. Sempre com motivo.
+  AJUSTE_ADMIN
 }
 
 /// Qual assinatura o usuário tem hoje.
 model Subscription {
   id          String           @id @default(uuid()) @db.Uuid
   userId      String           @unique @map("user_id") @db.Uuid
-  plano       NomePlano        @default(ESSENCIAL)
+  planId      String           @map("plan_id") @db.Uuid
   status      StatusAssinatura @default(ATIVA)
+  /// Cortesia não entra no MRR: é acesso dado, não receita.
+  cortesia    Boolean          @default(false)
   inicioCiclo DateTime         @default(now()) @map("inicio_ciclo")
   /// Quando o saldo do plano volta ao valor cheio. Lido em toda leitura de
   /// conta: é assim que o reset acontece sem depender de um cron externo.
   proximoReset DateTime        @map("proximo_reset")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Downgrade vale só no próximo ciclo, para não tirar crédito já pago.
+  /// Até lá o plano novo fica esperando aqui.
+  planoPendenteId      String? @map("plano_pendente_id") @db.Uuid
+  stripeSubscriptionId String? @map("stripe_subscription_id")
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan Plan @relation(fields: [planId], references: [id])
+
+  @@index([planId, status])
   @@map("user_subscriptions")
 }
 
@@ -316,10 +460,13 @@ model CreditTransaction {
   quantidade    Int
   /// Legível por gente: "Roteiro — Instagram: 5 erros que contadores cometem".
   motivo        String
+  /// Preenchido só em AJUSTE_ADMIN: quem mexeu no saldo à mão.
+  criadoPorAdminId String?   @map("criado_por_admin_id") @db.Uuid
   criadoEm      DateTime      @default(now()) @map("criado_em")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, criadoEm])
+  @@index([criadoEm, tipo])
   @@map("credit_transactions")
 }

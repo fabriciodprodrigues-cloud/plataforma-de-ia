@@ -9,20 +9,23 @@ import { Alerta } from "@/components/ui/alerta";
 import { Botao } from "@/components/ui/botao";
 import { GATILHOS, infoArquetipo } from "@/lib/arquetipos";
 import { PLATAFORMAS } from "@/lib/constants";
-import { mensagemUpgrade } from "@/lib/planos";
 import { useAutoSalvar } from "@/lib/hooks/use-auto-salvar";
 import { cn } from "@/lib/utils";
 
 export function SecaoRoteiro({
   ideaId,
   dados,
-  temTeleprompter,
+  bloqueioTeleprompter,
   aoAtualizar,
 }: {
   ideaId: string;
   dados: DadosPlataforma;
-  /** Trava de plano: quem não tem vê o convite de upgrade, não o teleprompter. */
-  temTeleprompter: boolean;
+  /**
+   * Trava de plano, resolvida no servidor: `null` libera, texto bloqueia e já
+   * vem pronto para exibir. Um campo só em vez de "tem acesso" + "mensagem"
+   * torna impossível a combinação sem sentido entre os dois.
+   */
+  bloqueioTeleprompter: string | null;
   aoAtualizar: (mudanca: Partial<DadosPlataforma>) => void;
 }) {
   const meta = PLATAFORMAS[dados.plataforma];
@@ -117,10 +120,12 @@ export function SecaoRoteiro({
               pessoa está prestes a gravar e precisaria dele. */}
           <Botao
             variante="secundario"
-            onClick={() => (temTeleprompter ? setTeleprompter(true) : setBloqueio(true))}
-            aria-describedby={temTeleprompter ? undefined : "aviso-teleprompter"}
+            onClick={() =>
+              bloqueioTeleprompter === null ? setTeleprompter(true) : setBloqueio(true)
+            }
+            aria-describedby={bloqueioTeleprompter ? "aviso-teleprompter" : undefined}
           >
-            {temTeleprompter ? (
+            {bloqueioTeleprompter === null ? (
               <Video className="size-4" aria-hidden />
             ) : (
               <Lock className="size-4" aria-hidden />
@@ -198,10 +203,10 @@ export function SecaoRoteiro({
         </div>
       )}
 
-      {bloqueio && !temTeleprompter && (
+      {bloqueio && bloqueioTeleprompter && (
         <div className="mt-4" id="aviso-teleprompter">
           <Alerta tom="info" titulo="Disponível em outro plano">
-            {mensagemUpgrade("teleprompter")} Ele rola o roteiro na tela enquanto
+            {bloqueioTeleprompter} Ele rola o roteiro na tela enquanto
             você grava, no ritmo da duração escolhida.{" "}
             <a href="/plano" className="font-medium text-marca-700 underline">
               Ver planos
@@ -248,7 +253,7 @@ export function SecaoRoteiro({
         {estadoSalvamento === "salvando" && "Salvando..."}
         {estadoSalvamento === "salvo" && "Alterações salvas"}
       </p>
-      {teleprompter && temTeleprompter && (
+      {teleprompter && bloqueioTeleprompter === null && (
         <Teleprompter
           texto={dados.conteudo}
           duracaoSegundos={dados.duracaoSegundos}

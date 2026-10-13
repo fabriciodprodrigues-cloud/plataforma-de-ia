@@ -1,8 +1,8 @@
 import { cache } from "react";
 import { TipoTransacao } from "@/generated/prisma/enums";
-import type { NomePlano } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
-import { PLANOS, PLANO_PADRAO, type Recurso } from "@/lib/planos";
+import { ROTULO_RECURSO, type Recurso } from "@/lib/planos";
+import { listarPlanosAtivos, planoPadrao, type Plan } from "@/lib/servicos/catalogo";
 
 /**
  * Saldo e assinatura de um usuário, já com o reset do ciclo aplicado.
@@ -15,11 +15,13 @@ import { PLANOS, PLANO_PADRAO, type Recurso } from "@/lib/planos";
  *    o ciclo virar ou comprar um pacote avulso.
  */
 export type Conta = {
-  plano: NomePlano;
+  /** A linha de `plans`, não um enum: o catálogo é editável pelo admin. */
+  plano: Plan;
   saldoPlano: number;
   saldoAvulso: number;
   minutosVideo: number;
   proximoReset: Date;
+  cortesia: boolean;
 };
 
 /** Saldo que pode ser gasto agora, venha de onde vier. */
@@ -66,7 +68,7 @@ export const obterConta = cache(async (userId: string): Promise<Conta> => {
   // só ao banco. Em sequência eram dois saltos até us-west-2, e o banco fica
   // longe das funções, que rodam em São Paulo.
   const [assinaturaExistente, saldoExistente] = await prisma.$transaction([
-    prisma.subscription.findUnique({ where: { userId } }),
+    prisma.subscription.findUnique({ where: { userId }, include: { plan: true } }),
     prisma.creditBalance.findUnique({ where: { userId } }),
   ]);
 
@@ -78,13 +80,14 @@ export const obterConta = cache(async (userId: string): Promise<Conta> => {
     (await prisma.subscription.create({
       data: {
         userId,
-        plano: PLANO_PADRAO,
+        planId: (await planoPadrao()).id,
         inicioCiclo: agora,
         proximoReset: somarMes(agora, 1),
       },
+      include: { plan: true },
     }));
 
-  const plano = PLANOS[assinatura.plano];
+  const plano = assinatura.plan;
 
   // Conta nova já nasce com o saldo do mês; senão a primeira geração falharia
   // por falta de crédito logo depois do cadastro.
@@ -101,11 +104,12 @@ export const obterConta = cache(async (userId: string): Promise<Conta> => {
 
   if (assinatura.proximoReset > agora) {
     return {
-      plano: assinatura.plano,
+      plano,
       saldoPlano: saldo.saldoPlano,
       saldoAvulso: saldo.saldoAvulso,
       minutosVideo: saldo.minutosVideo,
       proximoReset: assinatura.proximoReset,
+      cortesia: assinatura.cortesia,
     };
   }
 
@@ -124,42 +128,78 @@ export const obterConta = cache(async (userId: string): Promise<Conta> => {
     proximo = somarMes(assinatura.inicioCiclo, meses);
   }
 
+  // Virada de ciclo é o momento em que um downgrade agendado entra em vigor.
+  // Ele fica esperando em `planoPendenteId` justamente para não tirar, no meio
+  // do mês, crédito que o usuário já pagou.
+  const planoNovo = assinatura.planoPendenteId
+    ? ((await prisma.plan.findUnique({ where: { id: assinatura.planoPendenteId } })) ??
+      plano)
+    : plano;
+
   await prisma.$transaction([
     prisma.subscription.update({
       where: { userId },
-      data: { proximoReset: proximo },
+      data: {
+        proximoReset: proximo,
+        planId: planoNovo.id,
+        planoPendenteId: null,
+      },
     }),
     prisma.creditBalance.update({
       where: { userId },
       // saldoAvulso fica de fora de propósito: foi comprado, não é cortesia
       // mensal, e sumir com ele na virada seria tomar algo que o usuário pagou.
       data: {
-        saldoPlano: plano.creditosMensais,
-        minutosVideo: plano.minutosVideoMensais,
+        saldoPlano: planoNovo.creditosMensais,
+        minutosVideo: planoNovo.minutosVideoMensais,
       },
     }),
     prisma.creditTransaction.create({
       data: {
         userId,
         tipo: TipoTransacao.RESET_MENSAL,
-        quantidade: plano.creditosMensais,
-        motivo: `Renovação do plano ${plano.nome}`,
+        quantidade: planoNovo.creditosMensais,
+        motivo: `Renovação do plano ${planoNovo.nome}`,
       },
     }),
   ]);
 
   return {
-    plano: assinatura.plano,
-    saldoPlano: plano.creditosMensais,
+    plano: planoNovo,
+    saldoPlano: planoNovo.creditosMensais,
     saldoAvulso: saldo.saldoAvulso,
-    minutosVideo: plano.minutosVideoMensais,
+    minutosVideo: planoNovo.minutosVideoMensais,
     proximoReset: proximo,
+    cortesia: assinatura.cortesia,
   };
 });
 
 /** O plano do usuário libera esse recurso? */
-export function temRecurso(plano: NomePlano, recurso: Recurso): boolean {
-  return PLANOS[plano].recursos[recurso];
+export function temRecurso(plano: Plan, recurso: Recurso): boolean {
+  switch (recurso) {
+    case "teleprompter":
+      return plano.temTeleprompter;
+    case "bancoImagens":
+      return plano.temBancoImagens;
+    case "video":
+      return plano.temVideo;
+  }
+}
+
+/**
+ * Texto de bloqueio de plano, já apontando o plano mais barato que resolve.
+ *
+ * Fica no servidor porque precisa consultar o catálogo. A tela recebe a frase
+ * pronta — assim nenhuma regra comercial viaja para o navegador, e o texto
+ * acompanha o que o admin cadastrou sem precisar de deploy.
+ */
+export async function mensagemUpgrade(recurso: Recurso): Promise<string> {
+  const ativos = await listarPlanosAtivos();
+  const necessario = ativos.find((p) => temRecurso(p, recurso));
+  if (!necessario) {
+    return `${ROTULO_RECURSO[recurso]} não está disponível em nenhum plano no momento.`;
+  }
+  return `${ROTULO_RECURSO[recurso]} faz parte do plano ${necessario.nome}.`;
 }
 
 /** Mensagem de saldo insuficiente, com a data em que o saldo volta. */

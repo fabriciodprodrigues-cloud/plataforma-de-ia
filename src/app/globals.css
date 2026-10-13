@@ -44,8 +44,18 @@
   --color-linha: #232a52;
   --color-linha-forte: #333b6b;
 
+  /* Estados. Vindos do protótipo do admin, onde badge e medidor dependem de
+     cor para dizer "em dia", "atenção" e "problema" — sempre acompanhados de
+     texto, porque cor sozinha não é informação acessível. */
+  --color-ok: #34d399;
+  --color-aviso: #fbbf24;
+  --color-erro: #f87171;
+
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-titulo: var(--font-space-grotesk), var(--font-inter), sans-serif;
+  /* Rótulos, números e dados. É o que dá o ar técnico do protótipo sem
+     atrapalhar a leitura de texto corrido. */
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", monospace;
 
   --radius-xl2: 1.25rem;
 }
@@ -99,6 +109,45 @@
 
   .cartao {
     @apply rounded-2xl border border-linha bg-cartao;
+  }
+
+  /* Botões da landing e do admin, extraídos dos protótipos. O componente
+     <Botao> continua existindo para o app logado; estas classes servem aos
+     links (<a>/<Link>), onde um <button> seria o elemento errado. */
+  .botao-primario,
+  .botao-fantasma {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl
+           border border-transparent px-[22px] py-3.5 text-[15px] font-semibold
+           transition;
+  }
+
+  .botao-primario {
+    @apply bg-marca-500 text-white shadow-[0_8px_28px_-10px_rgba(38,71,255,0.8)]
+           hover:-translate-y-px hover:bg-marca-600;
+  }
+
+  .botao-fantasma {
+    @apply border-linha-forte bg-transparent text-tinta-900
+           hover:border-marca-700/35 hover:bg-marca-700/10;
+  }
+
+  .botao-sm {
+    @apply rounded-[9px] px-4 py-2.5 text-sm;
+  }
+
+  /* Entrada dos blocos da landing.
+     O padrão é VISÍVEL: quem está sem JS, ou com o observer indisponível, lê a
+     página inteira normalmente. Esconder é o caso excepcional, aplicado pelo
+     cliente só no que ainda está fora da tela. */
+  [data-revelar] {
+    transition:
+      opacity 0.6s ease,
+      transform 0.6s ease;
+  }
+
+  [data-revelar="oculto"] {
+    opacity: 0;
+    transform: translateY(16px);
   }
 }
 

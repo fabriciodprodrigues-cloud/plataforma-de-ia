@@ -28,15 +28,15 @@ export function Estudio({
   marca,
   plataformasEscolhidas,
   dadosIniciais,
-  temTeleprompter,
+  bloqueioTeleprompter,
 }: {
   ideaId: string;
   titulo: string;
   marca: MarcaCliente;
   plataformasEscolhidas: Plataforma[];
   dadosIniciais: DadosPlataforma[];
-  /** Trava de plano, já decidida no servidor. */
-  temTeleprompter: boolean;
+  /** Trava de plano, já decidida no servidor: `null` libera. */
+  bloqueioTeleprompter: string | null;
 }) {
   const router = useRouter();
   const [dados, setDados] = useState(dadosIniciais);
@@ -242,7 +242,7 @@ export function Estudio({
                   key={`roteiro-${atual.plataforma}`}
                   ideaId={ideaId}
                   dados={atual}
-                  temTeleprompter={temTeleprompter}
+                  bloqueioTeleprompter={bloqueioTeleprompter}
                   aoAtualizar={(m) => atualizarPlataforma(atual.plataforma, m)}
                 />
               )}

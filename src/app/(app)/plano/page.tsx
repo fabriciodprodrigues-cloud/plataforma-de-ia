@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import { Check, Minus, Plus } from "lucide-react";
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { obterConta, saldoTotal } from "@/lib/servicos/creditos";
+import { obterConta, saldoTotal, temRecurso } from "@/lib/servicos/creditos";
 import {
-  ORDEM_PLANOS,
-  PACOTES,
-  PLANOS,
   formatarPreco,
-  type Recurso,
-} from "@/lib/planos";
+  listarPacotesAtivos,
+  listarPlanosAtivos,
+  mostrarPrecosNaLanding,
+  rotuloPlataformas,
+} from "@/lib/servicos/catalogo";
+import type { Recurso } from "@/lib/planos";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Plano e créditos" };
@@ -24,8 +25,16 @@ const LINHAS_COMPARACAO: { rotulo: string; recurso?: Recurso }[] = [
 
 export default async function PaginaPlano() {
   const usuario = await exigirUsuario();
-  const conta = await obterConta(usuario.id);
-  const plano = PLANOS[conta.plano];
+
+  const [conta, planos, pacotes, mostrarPrecos] = await Promise.all([
+    obterConta(usuario.id),
+    listarPlanosAtivos(),
+    listarPacotesAtivos(),
+    // A mesma chave que controla a landing vale aqui. Mostrar preço nesta tela
+    // com a landing escondendo seria o usuário descobrir o valor por um
+    // caminho e não pelo outro.
+    mostrarPrecosNaLanding(),
+  ]);
 
   const extrato = await prisma.creditTransaction.findMany({
     where: { userId: usuario.id },
@@ -33,6 +42,7 @@ export default async function PaginaPlano() {
     take: 20,
   });
 
+  const plano = conta.plano;
   const disponivel = saldoTotal(conta);
   // Só o saldo do plano entra na barra: o avulso não tem "cota cheia" para
   // servir de denominador, então misturar os dois daria uma barra passando de
@@ -40,6 +50,10 @@ export default async function PaginaPlano() {
   const usados = Math.max(plano.creditosMensais - conta.saldoPlano, 0);
   const fracao =
     plano.creditosMensais > 0 ? Math.min(usados / plano.creditosMensais, 1) : 0;
+
+  // Planos arquivados somem da vitrine, mas se for o plano de quem está vendo,
+  // ele precisa continuar aparecendo — senão a pessoa não vê o próprio plano.
+  const vitrine = planos.some((p) => p.id === plano.id) ? planos : [plano, ...planos];
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -52,7 +66,10 @@ export default async function PaginaPlano() {
       <section className="cartao mt-6 p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
-            <p className="text-sm text-tinta-400">Plano {plano.nome}</p>
+            <p className="text-sm text-tinta-400">
+              Plano {plano.nome}
+              {conta.cortesia && " · cortesia"}
+            </p>
             <p className="mt-1 text-3xl font-semibold tracking-tight">
               {disponivel}{" "}
               <span className="text-base font-normal text-tinta-400">
@@ -84,20 +101,18 @@ export default async function PaginaPlano() {
         <p className="mt-2 text-sm text-tinta-400">
           {usados} de {plano.creditosMensais} do plano usados neste ciclo
           {conta.saldoAvulso > 0 && ` · ${conta.saldoAvulso} avulsos (não expiram)`}
-          {plano.minutosVideoMensais > 0 &&
-            ` · ${conta.minutosVideo} min de vídeo`}
+          {plano.minutosVideoMensais > 0 && ` · ${conta.minutosVideo} min de vídeo`}
         </p>
       </section>
 
       {/* Comparação de planos */}
       <h2 className="mt-10 text-lg font-semibold">Planos</h2>
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
-        {ORDEM_PLANOS.map((id) => {
-          const p = PLANOS[id];
-          const atual = id === conta.plano;
+        {vitrine.map((p) => {
+          const atual = p.id === plano.id;
           return (
             <div
-              key={id}
+              key={p.id}
               className={cn(
                 "rounded-2xl border p-4",
                 atual ? "border-marca-500 bg-marca-50" : "border-linha bg-cartao",
@@ -111,18 +126,21 @@ export default async function PaginaPlano() {
                   </span>
                 )}
               </div>
-              <p className="mt-1 text-xl font-semibold tracking-tight">
-                {formatarPreco(p.precoCentavos)}
-                <span className="text-sm font-normal text-tinta-400">/mês</span>
-              </p>
-              <p className="mt-1 text-sm text-tinta-500">{p.resumo}</p>
+              {mostrarPrecos && (
+                <p className="mt-1 text-xl font-semibold tracking-tight">
+                  {formatarPreco(p.precoCentavos)}
+                  <span className="text-sm font-normal text-tinta-400">/mês</span>
+                </p>
+              )}
+              <p className="mt-1 text-sm text-tinta-500">{p.descricao}</p>
               <p className="mt-3 text-sm font-medium">
                 {p.creditosMensais} créditos
-                {p.minutosVideoMensais > 0 && ` + ${p.minutosVideoMensais} min de vídeo`}
+                {p.minutosVideoMensais > 0 &&
+                  ` + ${p.minutosVideoMensais} min de vídeo`}
               </p>
               <ul className="mt-3 space-y-1.5">
                 {LINHAS_COMPARACAO.map((linha) => {
-                  const incluso = linha.recurso ? p.recursos[linha.recurso] : true;
+                  const incluso = linha.recurso ? temRecurso(p, linha.recurso) : true;
                   return (
                     <li
                       key={linha.rotulo}
@@ -132,7 +150,10 @@ export default async function PaginaPlano() {
                       )}
                     >
                       {incluso ? (
-                        <Check className="size-4 shrink-0 text-emerald-400" aria-hidden />
+                        <Check
+                          className="size-4 shrink-0 text-emerald-400"
+                          aria-hidden
+                        />
                       ) : (
                         <Minus className="size-4 shrink-0" aria-hidden />
                       )}
@@ -142,9 +163,7 @@ export default async function PaginaPlano() {
                 })}
               </ul>
               <p className="mt-3 text-xs text-tinta-400">
-                {p.maxPlataformas === 1
-                  ? "1 rede social"
-                  : `Até ${p.maxPlataformas} redes sociais`}
+                {rotuloPlataformas(p.maxPlataformas)}
               </p>
             </div>
           );
@@ -152,34 +171,42 @@ export default async function PaginaPlano() {
       </div>
 
       {/* Pacotes avulsos */}
-      <h2 className="mt-10 text-lg font-semibold">Créditos avulsos</h2>
-      <p className="mt-1 text-sm text-tinta-500">
-        Para quando o saldo acaba antes de virar o mês. Não expiram.
-      </p>
-      <div className="mt-4 grid gap-3 sm:grid-cols-4">
-        {PACOTES.map((pacote) => (
-          <div key={pacote.id} className="rounded-2xl border border-linha bg-cartao p-4">
-            <p className="text-sm font-medium text-tinta-500">{pacote.nome}</p>
-            <p className="mt-1 flex items-center gap-1 text-lg font-semibold">
-              <Plus className="size-4 text-marca-700" aria-hidden />
-              {pacote.quantidade}
-              <span className="text-sm font-normal text-tinta-400">
-                {pacote.tipo === "credito" ? "créditos" : "min"}
-              </span>
-            </p>
-            <p className="mt-1 text-sm text-tinta-400">
-              {formatarPreco(pacote.precoCentavos)}
-            </p>
+      {pacotes.length > 0 && (
+        <>
+          <h2 className="mt-10 text-lg font-semibold">Créditos avulsos</h2>
+          <p className="mt-1 text-sm text-tinta-500">
+            Para quando o saldo acaba antes de virar o mês. Não expiram.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-4">
+            {pacotes.map((pacote) => (
+              <div
+                key={pacote.id}
+                className="rounded-2xl border border-linha bg-cartao p-4"
+              >
+                <p className="text-sm font-medium text-tinta-500">{pacote.nome}</p>
+                <p className="mt-1 flex items-center gap-1 text-lg font-semibold">
+                  <Plus className="size-4 text-marca-700" aria-hidden />
+                  {pacote.quantidade}
+                  <span className="text-sm font-normal text-tinta-400">
+                    {pacote.tipo === "credito" ? "créditos" : "min"}
+                  </span>
+                </p>
+                {mostrarPrecos && (
+                  <p className="mt-1 text-sm text-tinta-400">
+                    {formatarPreco(pacote.precoCentavos)}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
 
       {/* Nenhum botão de compra: ainda não existe meio de pagamento ligado, e um
           botão que não cobra nada é pior que botão nenhum. */}
       <p className="mt-4 rounded-xl border border-linha bg-cartao p-4 text-sm text-tinta-500">
-        A cobrança ainda não está ligada. Enquanto isso, todas as contas usam a
-        cota do plano {PLANOS.ESSENCIAL.nome} e a troca de plano é feita por nós,
-        a pedido.
+        A cobrança ainda não está ligada. Enquanto isso a troca de plano é feita
+        por nós, a pedido.
       </p>
 
       {/* Extrato */}

@@ -5,7 +5,7 @@ import type { DadosPlataforma } from "./tipos";
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ordenarPlataformas } from "@/lib/constants";
-import { obterConta, temRecurso } from "@/lib/servicos/creditos";
+import { mensagemUpgrade, obterConta, temRecurso } from "@/lib/servicos/creditos";
 
 type Props = { params: Promise<{ ideaId: string }> };
 
@@ -36,10 +36,13 @@ export default async function PaginaConteudo({ params }: Props) {
 
   if (!ideia) notFound();
 
-  // Trava de plano, resolvida no servidor. Mandar só o booleano (e não o plano
-  // inteiro) mantém a regra comercial fora do pacote que vai para o navegador.
+  // Trava de plano, resolvida no servidor. A tela recebe só a frase de bloqueio
+  // (ou null), nunca o plano inteiro — assim a regra comercial não viaja para o
+  // pacote que vai ao navegador.
   const conta = await obterConta(usuario.id);
-  const temTeleprompter = temRecurso(conta.plano, "teleprompter");
+  const bloqueioTeleprompter = temRecurso(conta.plano, "teleprompter")
+    ? null
+    : await mensagemUpgrade("teleprompter");
 
   const plataformasEscolhidas = ordenarPlataformas(
     usuario.platformPreferences.map((p) => p.plataforma),
@@ -81,7 +84,7 @@ export default async function PaginaConteudo({ params }: Props) {
       titulo={ideia.titulo}
       plataformasEscolhidas={plataformasEscolhidas}
       dadosIniciais={dados}
-      temTeleprompter={temTeleprompter}
+      bloqueioTeleprompter={bloqueioTeleprompter}
       marca={{
         nomeMarca: usuario.brandKit?.nomeMarca ?? "Sua marca",
         corPrimaria: usuario.brandKit?.corPrimaria ?? "#6D4AFF",

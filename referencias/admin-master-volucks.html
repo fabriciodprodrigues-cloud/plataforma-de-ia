@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Master · Volucks IA</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#080B20; --surface:#0B1130; --card:#0F1638; --card-2:#121A42;
+    --ink:#F5F7FF; --ink-soft:#A3ACCF; --ink-faint:#8791BB;
+    --line:rgba(255,255,255,0.09); --line-strong:rgba(255,255,255,0.18);
+    --blue:#2647FF; --blue-strong:#3C5CFF; --cyan:#4CC9F0;
+    --cyan-soft:rgba(76,201,240,0.12); --cyan-border:rgba(76,201,240,0.35);
+    --ok:#34D399; --ok-soft:rgba(52,211,153,0.12);
+    --warn:#FBBF24; --warn-soft:rgba(251,191,36,0.12);
+    --bad:#F87171; --bad-soft:rgba(248,113,113,0.12);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:radial-gradient(900px 500px at 90% -10%, rgba(38,71,255,0.14), transparent 60%), var(--bg);
+    background-repeat:no-repeat;background-attachment:fixed;
+    color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:14.5px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:'Space Grotesk',system-ui,sans-serif;margin:0;letter-spacing:-0.3px;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  button,input,select{font-family:inherit;font-size:inherit;color:inherit;}
+  button{cursor:pointer;}
+  :focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:6px;}
+  .skip{position:absolute;left:-999px;top:8px;background:var(--cyan);color:#04202e;padding:8px 14px;border-radius:8px;z-index:300;font-weight:600;}
+  .skip:focus{left:12px;}
+
+  /* ---------- layout ---------- */
+  .shell{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+  .sidebar{
+    position:sticky;top:0;height:100vh;background:var(--surface);border-right:1px solid var(--line);
+    padding:22px 14px;display:flex;flex-direction:column;gap:6px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:0 8px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;}
+  .brand b{color:var(--cyan);}
+  .brand-sub{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 8px 18px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:var(--ink-faint);}
+  .pill-demo{color:var(--warn);background:var(--warn-soft);border:1px solid rgba(251,191,36,.35);padding:2px 8px;border-radius:999px;font-size:10px;letter-spacing:.04em;}
+  .nav{display:grid;gap:3px;}
+  .nav a{
+    display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:0 9px 9px 0;border-left:2px solid transparent;
+    color:var(--ink-soft);text-decoration:none;font-size:14px;transition:.15s;
+  }
+  .nav a svg{flex:none;opacity:.8;}
+  .nav a:hover{color:var(--ink);}
+  .nav a[aria-current="page"]{background:rgba(38,71,255,0.14);color:var(--ink);font-weight:600;border-left-color:var(--cyan);}
+  .nav a[aria-current="page"] svg{color:var(--cyan);opacity:1;}
+  .side-foot{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px 8px;border-top:1px solid var(--line);}
+  .side-foot small{display:block;color:var(--ink-faint);font-size:11.5px;}
+  .avatar{width:34px;height:34px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;}
+  .avatar.sm{width:30px;height:30px;font-size:11px;background:var(--card-2);border:1px solid var(--line);color:var(--cyan);}
+
+  .main{padding:30px 34px 70px;max-width:1240px;width:100%;outline:none;}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:26px;}
+  .page-head h1{font-size:28px;}
+  .page-head p{color:var(--ink-soft);margin:6px 0 0;}
+  .head-actions{display:flex;gap:10px;flex-wrap:wrap;}
+
+  /* ---------- componentes ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;}
+  .card h2{font-size:16px;margin-bottom:4px;}
+  .card .sub{color:var(--ink-faint);font-size:13px;margin-bottom:18px;}
+  .grid-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:16px;}
+  .grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;margin-bottom:16px;}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;}
+  .kpi .lbl{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);}
+  .kpi .val{font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:700;margin:8px 0 4px;letter-spacing:-0.5px;}
+  .kpi .note{font-size:12.5px;color:var(--ink-soft);}
+  .kpi.alert .val{color:var(--warn);}
+  .kpi.good .val{color:var(--cyan);}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:10px;border:1px solid transparent;font-weight:600;font-size:14px;transition:.15s;white-space:nowrap;}
+  .btn-primary{background:var(--blue);color:#fff;box-shadow:0 6px 22px -10px rgba(38,71,255,.9);}
+  .btn-primary:hover{background:var(--blue-strong);}
+  .btn-secondary{background:transparent;border-color:var(--line-strong);color:var(--ink);}
+  .btn-secondary:hover{border-color:var(--cyan-border);background:var(--cyan-soft);}
+  .btn-sm{padding:6px 12px;font-size:13px;border-radius:8px;}
+  .icon-btn{background:transparent;border:1px solid var(--line);width:34px;height:34px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:18px;line-height:1;}
+  .icon-btn:hover{color:var(--ink);border-color:var(--line-strong);}
+
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);white-space:nowrap;}
+  .badge i{width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .badge.ok{color:var(--ok);background:var(--ok-soft);border-color:rgba(52,211,153,.3);}
+  .badge.warn{color:var(--warn);background:var(--warn-soft);border-color:rgba(251,191,36,.3);}
+  .badge.bad{color:var(--bad);background:var(--bad-soft);border-color:rgba(248,113,113,.3);}
+  .badge.mute{color:var(--ink-faint);}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;align-items:center;}
+  .input,.select{
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 13px;min-height:42px;width:100%;
+  }
+  .input::placeholder{color:var(--ink-faint);}
+  .input:focus,.select:focus{outline:none;border-color:var(--cyan-border);box-shadow:0 0 0 3px var(--cyan-soft);}
+  .input[aria-invalid="true"]{border-color:var(--bad);}
+  .select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23A3ACCF' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;}
+  .select option{background:var(--card);color:var(--ink);}
+  .toolbar .grow{flex:1;min-width:220px;}
+  .toolbar .fixed{width:190px;}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip-btn{background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);padding:7px 14px;border-radius:999px;font-size:13px;}
+  .chip-btn[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff;}
+
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);}
+  table{width:100%;border-collapse:collapse;min-width:720px;}
+  th{text-align:left;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;padding:13px 16px;border-bottom:1px solid var(--line);background:var(--surface);white-space:nowrap;}
+  td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:rgba(255,255,255,0.02);}
+  td.num,th.num{text-align:right;}
+  .usr{display:flex;align-items:center;gap:12px;}
+  .usr b{display:block;font-weight:600;}
+  .usr small{color:var(--ink-faint);font-size:12.5px;}
+  .meter{width:140px;height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:5px;}
+  .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));}
+  .meter.hot i{background:linear-gradient(90deg,var(--warn),var(--bad));}
+  .small{font-size:12.5px;color:var(--ink-faint);}
+  .empty{padding:44px 20px;text-align:center;color:var(--ink-soft);}
+  .empty b{display:block;font-family:'Space Grotesk',sans-serif;font-size:17px;color:var(--ink);margin-bottom:6px;}
+
+  /* gráficos */
+  .chart svg{display:block;width:100%;height:auto;}
+  .chart text{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#8791BB;}
+  .legend{display:grid;gap:10px;}
+  .legend li{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13.5px;}
+  .legend ul{margin:0;padding:0;display:grid;gap:10px;}
+  .donut-wrap{display:flex;align-items:center;gap:26px;flex-wrap:wrap;}
+  .hbars{display:grid;gap:14px;}
+  .hbar .row{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px;}
+  .hbar .track{height:8px;background:var(--line);border-radius:4px;overflow:hidden;}
+  .hbar .track i{display:block;height:100%;border-radius:4px;}
+  .list{display:grid;gap:2px;}
+  .list .it{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);}
+  .list .it:last-child{border-bottom:none;}
+
+  /* planos */
+  .plans-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;}
+  .plan-card{display:flex;flex-direction:column;gap:14px;}
+  .plan-card.arch{opacity:.65;}
+  .plan-card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .plan-card h3{font-size:20px;}
+  .price{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:700;}
+  .price small{font-family:'Inter',sans-serif;font-size:13px;font-weight:400;color:var(--ink-faint);}
+  .feats{list-style:none;margin:0;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);display:grid;gap:8px;font-size:13.5px;}
+  .feats li{display:flex;gap:9px;align-items:center;}
+  .feats li svg{flex:none;color:var(--cyan);}
+  .feats li.off{color:var(--ink-faint);}
+  .feats li.off svg{color:var(--ink-faint);opacity:.6;}
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .metrics .m small{display:block;color:var(--ink-faint);font-size:11.5px;}
+  .metrics .m b{font-family:'Space Grotesk',sans-serif;font-size:17px;}
+  .plan-actions{display:flex;gap:8px;margin-top:auto;}
+  .plan-actions .btn{flex:1;}
+
+  /* formulários e modal */
+  .overlay{position:fixed;inset:0;background:rgba(4,6,18,0.74);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;z-index:200;}
+  .modal{background:var(--card);border:1px solid var(--line-strong);border-radius:18px;width:100%;max-width:520px;max-height:calc(100vh - 40px);display:flex;flex-direction:column;box-shadow:0 40px 100px -30px rgba(0,0,0,.9);}
+  .modal header{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--line);}
+  .modal header h2{font-size:19px;}
+  .modal form{display:flex;flex-direction:column;min-height:0;}
+  .modal-body{padding:22px 24px;overflow-y:auto;display:grid;gap:18px;}
+  .modal footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid var(--line);}
+  .field label.lbl{display:block;font-size:13px;font-weight:500;color:var(--ink-soft);margin-bottom:7px;}
+  .field .hint{font-size:12.5px;color:var(--ink-faint);margin-top:6px;}
+  .field .err{font-size:12.5px;color:var(--bad);margin-top:6px;min-height:0;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .switch{display:flex;align-items:center;gap:12px;cursor:pointer;padding:4px 0;}
+  .switch input{position:absolute;opacity:0;width:0;height:0;}
+  .switch .track{width:38px;height:22px;border-radius:999px;background:var(--line-strong);position:relative;transition:.15s;flex:none;}
+  .switch .track::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s;}
+  .switch input:checked + .track{background:var(--blue);}
+  .switch input:checked + .track::after{transform:translateX(16px);}
+  .switch input:focus-visible + .track{outline:2px solid var(--cyan);outline-offset:2px;}
+  .switch input:disabled + .track{opacity:.4;}
+  .preview{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13.5px;color:var(--ink-soft);}
+  .preview b{color:var(--ink);}
+  .preview .good{color:var(--ok);} .preview .bad{color:var(--bad);}
+  .radio-list{display:grid;gap:10px;}
+  .radio{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:12px;cursor:pointer;background:var(--surface);}
+  .radio:has(input:checked){border-color:var(--cyan-border);background:var(--cyan-soft);}
+  .radio input{margin-top:3px;accent-color:var(--cyan);}
+  .radio b{display:block;}
+  .radio small{color:var(--ink-faint);font-size:12.5px;}
+  .warnbox{border:1px solid rgba(251,191,36,.35);background:var(--warn-soft);color:var(--warn);padding:11px 14px;border-radius:10px;font-size:13px;}
+  .note-box{margin-top:18px;border:1px dashed var(--line-strong);border-radius:12px;padding:14px 16px;color:var(--ink-soft);font-size:13px;}
+
+  #toasts{position:fixed;bottom:22px;right:22px;display:grid;gap:10px;z-index:400;}
+  .toast{background:var(--card-2);border:1px solid var(--cyan-border);color:var(--ink);padding:12px 18px;border-radius:12px;box-shadow:0 20px 50px -20px rgba(0,0,0,.8);animation:in .25s ease;}
+  @keyframes in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){.toast{animation:none;}}
+
+  @media (max-width:900px){
+    .shell{grid-template-columns:minmax(0,1fr);}
+    .sidebar{min-width:0;}
+    .sidebar{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:14px 16px;gap:10px;}
+    .brand-sub{padding:0;margin-left:auto;}
+    .nav{display:flex;order:3;width:100%;overflow-x:auto;gap:6px;padding-bottom:2px;}
+    .nav a{border-left:none;border-bottom:2px solid transparent;border-radius:8px;white-space:nowrap;}
+    .nav a[aria-current="page"]{border-bottom-color:var(--cyan);}
+    .side-foot{display:none;}
+    .main{padding:22px 16px 60px;}
+    .two{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#conteudo">Pular para o conteúdo</a>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true">
+        <line x1="20" y1="20" x2="35" y2="50" stroke="#2647FF" stroke-width="5" stroke-linecap="round"/>
+        <line x1="35" y1="50" x2="50" y2="82" stroke="#2647FF" stroke-width="5" stroke-linecap="round"/>
+        <line x1="80" y1="20" x2="65" y2="50" stroke="#2647FF" stroke-width="5" stroke-linecap="round"/>
+        <line x1="65" y1="50" x2="50" y2="82" stroke="#2647FF" stroke-width="5" stroke-linecap="round"/>
+        <line x1="35" y1="50" x2="65" y2="50" stroke="#4CC9F0" stroke-width="2.5"/>
+        <circle cx="20" cy="20" r="6" fill="#2647FF"/><circle cx="80" cy="20" r="6" fill="#2647FF"/>
+        <circle cx="35" cy="50" r="5" fill="#4CC9F0"/><circle cx="65" cy="50" r="5" fill="#4CC9F0"/>
+        <circle cx="50" cy="82" r="7" fill="#2647FF"/>
+      </svg>
+      <span>VOLUCKS <b>IA</b></span>
+    </div>
+    <div class="brand-sub">ADMIN MASTER <span class="pill-demo">dados de exemplo</span></div>
+    <nav class="nav" aria-label="Principal">
+      <a href="#visao-geral" data-rota="visao-geral"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Visão geral</a>
+      <a href="#usuarios" data-rota="usuarios"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14.4c2 .8 3.5 2.6 3.5 5.6"/></svg>Usuários</a>
+      <a href="#planos" data-rota="planos"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5z"/><path d="m3 13 9 5 9-5M3 17.5l9 5 9-5" opacity=".6"/></svg>Planos</a>
+      <a href="#financeiro" data-rota="financeiro"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10.5h19M6.5 15h3"/></svg>Financeiro</a>
+    </nav>
+    <div class="side-foot">
+      <div class="avatar" aria-hidden="true">AM</div>
+      <div><b>Admin Master</b><small>acesso total</small></div>
+    </div>
+  </aside>
+  <main id="conteudo" class="main" tabindex="-1"></main>
+</div>
+<div id="toasts" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+
+/* ===================== configuração ===================== */
+// Custos unitários vindos da planilha de custos (média ponderada 40% roteiro / 60% arte).
+const CUSTO_CREDITO   = 0.0723; // R$ por crédito
+const CUSTO_MIN_VIDEO = 0.162;  // R$ por minuto de vídeo processado
+const INFRA_FIXA      = 891;    // R$/mês de infraestrutura fixa (planilha de custos)
+const PALETA = ['#2647FF','#4CC9F0','#A78BFA','#34D399','#FBBF24','#F472B6','#FB923C','#94A3B8'];
+const PACOTES = { 'Pacote P (30 créditos)':39, 'Pacote M (80 créditos)':89, 'Pacote G (200 créditos)':179, 'Vídeo extra (30 min)':59 };
+
+/* ===================== utilitários ===================== */
+const brl = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const num = new Intl.NumberFormat('pt-BR');
+const pctFmt = new Intl.NumberFormat('pt-BR',{style:'percent',maximumFractionDigits:0});
+const DIA = 86400000;
+const hoje = new Date();
+const diasAtras = n => new Date(hoje.getTime() - n*DIA);
+const fmtData = d => d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}).replace('.','');
+const fmtDataCurta = d => d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const slug = s => s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+const iniciais = nome => nome.trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('').toUpperCase();
+function rng(seed){ return function(){ seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* ===================== dados de exemplo ===================== */
+const PLANOS_INICIAIS = [
+  {id:'essencial', nome:'Essencial', preco:47,  creditos:40,  minVideo:0,  teleprompter:false, bancoImagens:false, video:false, maxPlataformas:1, ativo:true},
+  {id:'criador',   nome:'Criador',   preco:97,  creditos:120, minVideo:0,  teleprompter:true,  bancoImagens:true,  video:false, maxPlataformas:3, ativo:true},
+  {id:'completo',  nome:'Completo',  preco:197, creditos:300, minVideo:60, teleprompter:true,  bancoImagens:true,  video:true,  maxPlataformas:0, ativo:true}
+];
+const NOMES = ['Ana','Bruno','Camila','Diego','Elisa','Felipe','Gabriela','Henrique','Isabela','João','Karina','Lucas','Mariana','Nicolas','Olívia','Paulo','Rafaela','Samuel','Tatiane','Vitor','Yasmin','Rodrigo','Larissa','Thiago','Beatriz','Marcelo','Patrícia','Renato','Sabrina','Eduardo'];
+const SOBRENOMES = ['Silva','Souza','Oliveira','Santos','Lima','Pereira','Costa','Ribeiro','Almeida','Carvalho','Gomes','Martins','Araújo','Barbosa','Rocha','Dias','Moreira','Nunes','Teixeira','Cardoso'];
+
+function gerarUsuarios(){
+  const r = rng(2026), out = [], emails = new Set();
+  let tent = 0;
+  while(out.length < 36 && tent++ < 800){
+    const n = NOMES[Math.floor(r()*NOMES.length)], s = SOBRENOMES[Math.floor(r()*SOBRENOMES.length)];
+    const email = `${slug(n)}.${slug(s)}@example.com`;
+    if(emails.has(email)) continue; emails.add(email);
+    const pr = r(), planoId = pr < .55 ? 'essencial' : pr < .88 ? 'criador' : 'completo';
+    const sr = r(), status = sr < .85 ? 'ativo' : sr < .95 ? 'inadimplente' : 'cancelado';
+    const plano = PLANOS_INICIAIS.find(p => p.id === planoId);
+    out.push({
+      id: out.length + 1, nome: `${n} ${s}`, email, planoId, status,
+      cortesia: status === 'ativo' && r() < .06,
+      creditosUsados: status === 'cancelado' ? 0 : Math.round(plano.creditos * Math.pow(r(), 1.4)),
+      minVideoUsados: (plano.video && status !== 'cancelado') ? Math.round(plano.minVideo * Math.pow(r(), 1.5)) : 0,
+      criadoEm: diasAtras(Math.floor(r()*120))
+    });
+  }
+  return out;
+}
+function gerarTransacoes(usuarios){
+  const r = rng(77), out = [];
+  usuarios.forEach(u => {
+    if(u.status === 'cancelado' || u.cortesia) return;
+    const p = PLANOS_INICIAIS.find(x => x.id === u.planoId);
+    out.push({id: out.length+1, data: diasAtras(Math.floor(r()*28)), usuarioId: u.id, desc: `Assinatura ${p.nome}`, valor: p.preco, status: u.status === 'inadimplente' ? 'falhou' : 'pago'});
+  });
+  const nomesPacotes = Object.keys(PACOTES), ativos = usuarios.filter(u => u.status === 'ativo');
+  for(let i = 0; i < 10; i++){
+    const u = ativos[Math.floor(r()*ativos.length)], pk = nomesPacotes[Math.floor(r()*nomesPacotes.length)];
+    out.push({id: out.length+1, data: diasAtras(Math.floor(r()*28)), usuarioId: u.id, desc: pk, valor: PACOTES[pk], status: i === 3 ? 'pendente' : 'pago'});
+  }
+  return out.sort((a,b) => b.data - a.data).map((t,i) => ({...t, id:i+1}));
+}
+const state = { planos: PLANOS_INICIAIS.map(p => ({...p})), usuarios: gerarUsuarios(), transacoes: [], filtro:{busca:'', plano:'todos', status:'todos'}, finFiltro:'todos' };
+state.transacoes = gerarTransacoes(state.usuarios);
+
+// série diária de consumo (30 dias) — somada, bate com o total de créditos usados
+const SERIE = (function(){
+  const r = rng(9), pesos = Array.from({length:30}, () => 0.35 + r());
+  const soma = pesos.reduce((a,b) => a+b, 0);
+  const total = state.usuarios.reduce((a,u) => a + u.creditosUsados, 0);
+  return pesos.map((p,i) => ({data: diasAtras(29-i), valor: Math.round(total * p / soma)}));
+})();
+
+/* ===================== cálculos ===================== */
+const planoDe = id => state.planos.find(p => p.id === id);
+const custoMaxPlano = p => p.creditos * CUSTO_CREDITO + p.minVideo * CUSTO_MIN_VIDEO;
+const margemMax = p => p.preco > 0 ? (p.preco - custoMaxPlano(p)) / p.preco : null;
+const limitePlataformas = n => n === 0 ? 'Redes ilimitadas' : n === 1 ? '1 rede' : `Até ${n} redes`;
+function mrrPlano(planoId){ return state.usuarios.filter(u => u.planoId === planoId && u.status === 'ativo' && !u.cortesia).length * (planoDe(planoId)?.preco || 0); }
+function kpis(){
+  const u = state.usuarios, ativos = u.filter(x => x.status === 'ativo');
+  const receita30 = state.transacoes.filter(t => t.status === 'pago' && t.data >= diasAtras(30)).reduce((a,t) => a + t.valor, 0);
+  const pendente = state.transacoes.filter(t => t.status === 'pendente').reduce((a,t) => a + t.valor, 0);
+  const creditos = u.reduce((a,x) => a + x.creditosUsados, 0);
+  const minVideo = u.reduce((a,x) => a + x.minVideoUsados, 0);
+  const custoIA = creditos * CUSTO_CREDITO + minVideo * CUSTO_MIN_VIDEO;
+  return {
+    total: u.length, ativos: ativos.length, novos30: u.filter(x => x.criadoEm >= diasAtras(30)).length,
+    inadimplentes: u.filter(x => x.status === 'inadimplente').length, cancelados: u.filter(x => x.status === 'cancelado').length,
+    mrr: ativos.filter(x => !x.cortesia).reduce((a,x) => a + (planoDe(x.planoId)?.preco || 0), 0),
+    creditos, minVideo, receita30, pendente, custoIA, resultado: receita30 - custoIA - INFRA_FIXA
+  };
+}
+
+/* ===================== gráficos (SVG) ===================== */
+function niceCeil(v){ const e = Math.pow(10, Math.floor(Math.log10(v || 1))), f = v / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * e; }
+function graficoBarras(serie){
+  const W = 640, H = 210, pl = 38, pr = 6, pt = 10, pb = 26;
+  const max = niceCeil(Math.max(...serie.map(s => s.valor), 1)), bw = (W-pl-pr) / serie.length, ih = H-pt-pb;
+  let g = '';
+  [0, .5, 1].forEach(f => { const y = pt + ih - ih*f; g += `<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="rgba(255,255,255,0.08)"/><text x="${pl-6}" y="${y+3}" text-anchor="end">${num.format(Math.round(max*f))}</text>`; });
+  serie.forEach((s,i) => {
+    const h = Math.max(1, ih * s.valor / max), x = pl + i*bw + 2, y = pt + ih - h;
+    g += `<rect x="${x}" y="${y}" width="${bw-4}" height="${h}" rx="2" fill="#4CC9F0" fill-opacity=".85"><title>${fmtDataCurta(s.data)}: ${num.format(s.valor)} créditos</title></rect>`;
+  });
+  [0, 14, 29].forEach(i => { g += `<text x="${pl + i*bw + bw/2}" y="${H-8}" text-anchor="${i===0?'start':i===29?'end':'middle'}">${fmtDataCurta(serie[i].data)}</text>`; });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Créditos usados por dia nos últimos 30 dias">${g}</svg>`;
+}
+function graficoRosca(partes){
+  const R = 54, C = 2*Math.PI*R, total = partes.reduce((a,p) => a + p.valor, 0) || 1;
+  let off = 0, arcos = '';
+  partes.forEach(p => { const len = C * p.valor / total; arcos += `<circle cx="70" cy="70" r="${R}" fill="none" stroke="${p.cor}" stroke-width="18" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 70 70)"/>`; off += len; });
+  return `<svg viewBox="0 0 140 140" width="150" height="150" role="img" aria-label="Distribuição de usuários por plano" style="flex:none"><circle cx="70" cy="70" r="${R}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="18"/>${arcos}<text x="70" y="68" text-anchor="middle" style="font-family:'Space Grotesk';font-size:22px;font-weight:700;fill:#F5F7FF">${total}</text><text x="70" y="84" text-anchor="middle" style="font-size:9px">com plano</text></svg>`;
+}
+
+/* ===================== componentes de HTML ===================== */
+const ICO = { ok:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>', off:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg>' };
+const cabecalho = (t, sub, acoes='') => `<div class="page-head"><div><h1 tabindex="-1">${t}</h1><p>${sub}</p></div><div class="head-actions">${acoes}</div></div>`;
+const badgeStatus = s => ({ativo:'<span class="badge ok"><i></i>Ativo</span>', inadimplente:'<span class="badge warn"><i></i>Inadimplente</span>', cancelado:'<span class="badge mute"><i></i>Cancelado</span>'}[s]);
+const badgeTx = s => ({pago:'<span class="badge ok"><i></i>Pago</span>', pendente:'<span class="badge warn"><i></i>Pendente</span>', falhou:'<span class="badge bad"><i></i>Falhou</span>'}[s]);
+const corPlano = id => PALETA[Math.max(0, state.planos.findIndex(p => p.id === id)) % PALETA.length];
+function celulaCreditos(u){
+  const p = planoDe(u.planoId), lim = p ? p.creditos : 0, pc = lim ? Math.min(100, Math.round(u.creditosUsados / lim * 100)) : 0;
+  return `<div class="meter ${pc >= 90 ? 'hot' : ''}" role="img" aria-label="${pc}% do limite usado"><i style="width:${pc}%"></i></div><span class="small">${num.format(u.creditosUsados)} / ${num.format(lim)}</span>`;
+}
+
+/* ===================== views ===================== */
+function visaoGeral(){
+  const k = kpis();
+  const porPlano = state.planos.map(p => ({nome:p.nome, cor:corPlano(p.id), valor: state.usuarios.filter(u => u.planoId === p.id && u.status !== 'cancelado').length})).filter(p => p.valor > 0);
+  const totalPlano = porPlano.reduce((a,p) => a + p.valor, 0) || 1;
+  const recentes = [...state.usuarios].sort((a,b) => b.criadoEm - a.criadoEm).slice(0,5);
+  const top = [...state.usuarios].filter(u => u.status !== 'cancelado').sort((a,b) => b.creditosUsados - a.creditosUsados).slice(0,5);
+  return `
+  ${cabecalho('Visão geral', 'Resumo da plataforma nos últimos 30 dias.')}
+  <section class="grid-kpi" aria-label="Indicadores principais">
+    <div class="kpi"><div class="lbl">Usuários</div><div class="val">${num.format(k.total)}</div><div class="note">${k.ativos} ativos · +${k.novos30} nos últimos 30 dias</div></div>
+    <div class="kpi"><div class="lbl">Créditos usados</div><div class="val">${num.format(k.creditos)}</div><div class="note">${num.format(k.minVideo)} min de vídeo processados</div></div>
+    <div class="kpi good"><div class="lbl">Receita recorrente (MRR)</div><div class="val">${brl.format(k.mrr)}</div><div class="note">assinaturas ativas, sem cortesias</div></div>
+    <div class="kpi ${k.inadimplentes ? 'alert' : ''}"><div class="lbl">Inadimplentes</div><div class="val">${k.inadimplentes}</div><div class="note">${k.cancelados} cancelados no total</div></div>
+  </section>
+  <section class="grid-2">
+    <div class="card chart"><h2>Consumo diário de créditos</h2><div class="sub">Últimos 30 dias</div>${graficoBarras(SERIE)}</div>
+    <div class="card"><h2>Usuários por plano</h2><div class="sub">Contas ativas e inadimplentes</div>
+      <div class="donut-wrap">${graficoRosca(porPlano)}
+        <div class="legend"><ul>${porPlano.map(p => `<li><span><span class="dot" style="background:${p.cor}"></span>${esc(p.nome)}</span><span><b>${p.valor}</b> <span class="small">· ${pctFmt.format(p.valor/totalPlano)}</span></span></li>`).join('')}</ul></div>
+      </div>
+    </div>
+  </section>
+  <section class="grid-2">
+    <div class="card"><h2>Últimos cadastros</h2><div class="sub">Os cinco mais recentes</div><div class="list">${recentes.map(u => `<div class="it"><div class="usr"><span class="avatar sm" aria-hidden="true">${esc(iniciais(u.nome))}</span><div><b>${esc(u.nome)}</b><small>${esc(planoDe(u.planoId)?.nome || '—')} · ${fmtData(u.criadoEm)}</small></div></div>${badgeStatus(u.status)}</div>`).join('')}</div></div>
+    <div class="card"><h2>Maior consumo de créditos</h2><div class="sub">Usuários mais ativos no ciclo</div><div class="list">${top.map(u => `<div class="it"><div class="usr"><span class="avatar sm" aria-hidden="true">${esc(iniciais(u.nome))}</span><div><b>${esc(u.nome)}</b><small>${esc(planoDe(u.planoId)?.nome || '—')}</small></div></div><div>${celulaCreditos(u)}</div></div>`).join('')}</div></div>
+  </section>`;
+}
+
+function opcoesPlano(sel, todos=false){
+  return `${todos ? '<option value="todos">Todos os planos</option>' : ''}${state.planos.map(p => `<option value="${p.id}" ${sel === p.id ? 'selected' : ''}>${esc(p.nome)}${p.ativo ? '' : ' (arquivado)'}</option>`).join('')}`;
+}
+function usuariosView(){
+  const f = state.filtro;
+  return `
+  ${cabecalho('Usuários', 'Crie contas, acompanhe o consumo e troque o plano de cada usuário.', '<button class="btn btn-primary" data-action="novo-usuario">+ Novo usuário</button>')}
+  <div class="toolbar">
+    <div class="grow"><label class="sr" for="f-busca" style="position:absolute;left:-999px">Buscar usuário</label><input id="f-busca" class="input" type="search" placeholder="Buscar por nome ou e-mail" value="${esc(f.busca)}"></div>
+    <div class="fixed"><label for="f-plano" style="position:absolute;left:-999px">Filtrar por plano</label><select id="f-plano" class="select">${opcoesPlano(f.plano, true)}</select></div>
+    <div class="fixed"><label for="f-status" style="position:absolute;left:-999px">Filtrar por status</label>
+      <select id="f-status" class="select">${[['todos','Todos os status'],['ativo','Ativos'],['inadimplente','Inadimplentes'],['cancelado','Cancelados']].map(([v,l]) => `<option value="${v}" ${f.status === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+  </div>
+  <div id="usr-tabela"></div>`;
+}
+function tabelaUsuarios(){
+  const f = state.filtro, q = f.busca.trim().toLowerCase();
+  const lista = state.usuarios.filter(u => (!q || u.nome.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) && (f.plano === 'todos' || u.planoId === f.plano) && (f.status === 'todos' || u.status === f.status)).sort((a,b) => b.criadoEm - a.criadoEm);
+  if(!lista.length) return `<div class="table-wrap"><div class="empty"><b>Nenhum usuário encontrado</b>Ajuste a busca ou os filtros.<div style="margin-top:14px"><button class="btn btn-secondary btn-sm" data-action="limpar-filtros">Limpar filtros</button></div></div></div>`;
+  return `<div class="table-wrap"><table>
+    <caption style="position:absolute;left:-999px">Lista de usuários</caption>
+    <thead><tr><th scope="col">Usuário</th><th scope="col">Plano</th><th scope="col">Créditos no ciclo</th><th scope="col">Status</th><th scope="col">Cadastro</th><th scope="col"><span style="position:absolute;left:-999px">Ações</span></th></tr></thead>
+    <tbody>${lista.map(u => { const p = planoDe(u.planoId); return `<tr>
+      <td><div class="usr"><span class="avatar sm" aria-hidden="true">${esc(iniciais(u.nome))}</span><div><b>${esc(u.nome)}</b><small>${esc(u.email)}</small></div></div></td>
+      <td><span class="dot" style="background:${corPlano(u.planoId)}"></span>${esc(p?.nome || '—')}${u.cortesia ? ' <span class="badge mute">Cortesia</span>' : ''}</td>
+      <td>${celulaCreditos(u)}</td><td>${badgeStatus(u.status)}</td><td class="small">${fmtData(u.criadoEm)}</td>
+      <td class="num"><button class="btn btn-secondary btn-sm" data-action="alterar-plano" data-id="${u.id}" aria-label="Alterar plano de ${esc(u.nome)}">Alterar plano</button></td></tr>`; }).join('')}</tbody></table></div>
+  <p class="small" style="margin-top:10px">${lista.length} de ${state.usuarios.length} usuários</p>`;
+}
+
+function planoCard(p){
+  const n = state.usuarios.filter(u => u.planoId === p.id && u.status !== 'cancelado').length, m = margemMax(p);
+  const f = (on, txt) => `<li class="${on ? '' : 'off'}">${on ? ICO.ok : ICO.off}${txt}</li>`;
+  return `<article class="card plan-card ${p.ativo ? '' : 'arch'}">
+    <div class="top"><div><h3>${esc(p.nome)}</h3></div>${p.ativo ? '<span class="badge ok"><i></i>Ativo</span>' : '<span class="badge mute"><i></i>Arquivado</span>'}</div>
+    <div class="price">${brl.format(p.preco)}<small> /mês</small></div>
+    <ul class="feats">
+      <li>${ICO.ok}${num.format(p.creditos)} créditos por mês</li>
+      ${f(p.video, p.video ? `Editor de vídeo · ${num.format(p.minVideo)} min/mês` : 'Editor de vídeo')}
+      ${f(p.teleprompter, 'Teleprompter')}${f(p.bancoImagens, 'Banco de imagens')}
+      <li>${ICO.ok}${limitePlataformas(p.maxPlataformas)}</li>
+    </ul>
+    <div class="metrics">
+      <div class="m"><small>Usuários</small><b>${n}</b></div><div class="m"><small>MRR do plano</small><b>${brl.format(mrrPlano(p.id))}</b></div>
+      <div class="m"><small>Custo máx./usuário</small><b>${brl.format(custoMaxPlano(p))}</b></div><div class="m"><small>Margem se uso total</small><b>${m === null ? '—' : pctFmt.format(m)}</b></div>
+    </div>
+    <div class="plan-actions"><button class="btn btn-secondary btn-sm" data-action="editar-plano" data-id="${p.id}">Editar</button><button class="btn btn-secondary btn-sm" data-action="arquivar-plano" data-id="${p.id}">${p.ativo ? 'Arquivar' : 'Reativar'}</button></div>
+  </article>`;
+}
+function planosView(){
+  return `${cabecalho('Planos', 'Crie e ajuste os módulos que os clientes podem contratar.', '<button class="btn btn-primary" data-action="novo-plano">+ Novo plano</button>')}
+  <div class="plans-grid">${state.planos.map(planoCard).join('')}</div>
+  <div class="note-box">O <b>custo máximo</b> considera o plano 100% usado, com R$ ${CUSTO_CREDITO.toFixed(4).replace('.',',')} por crédito e R$ ${CUSTO_MIN_VIDEO.toFixed(3).replace('.',',')} por minuto de vídeo (planilha de custos). Planos com usuários não podem ser excluídos — arquive para esconder de novos cadastros.</div>`;
+}
+
+function financeiroView(){
+  const k = kpis(), partes = state.planos.map(p => ({nome:p.nome, cor:corPlano(p.id), valor:mrrPlano(p.id)})).filter(p => p.valor > 0);
+  const maxP = Math.max(...partes.map(p => p.valor), 1), margem = k.receita30 > 0 ? k.resultado / k.receita30 : null;
+  return `
+  ${cabecalho('Financeiro', 'Receita, custo estimado de IA e transações dos últimos 30 dias.', '<button class="btn btn-secondary" data-action="exportar-csv">Exportar CSV</button>')}
+  <section class="grid-kpi" aria-label="Indicadores financeiros">
+    <div class="kpi good"><div class="lbl">MRR</div><div class="val">${brl.format(k.mrr)}</div><div class="note">receita recorrente mensal</div></div>
+    <div class="kpi"><div class="lbl">Receita recebida (30 dias)</div><div class="val">${brl.format(k.receita30)}</div><div class="note">${brl.format(k.pendente)} pendentes</div></div>
+    <div class="kpi"><div class="lbl">Custo estimado de IA</div><div class="val">${brl.format(k.custoIA)}</div><div class="note">+ ${brl.format(INFRA_FIXA)} de infraestrutura fixa</div></div>
+    <div class="kpi ${k.resultado < 0 ? 'alert' : 'good'}"><div class="lbl">Resultado estimado</div><div class="val">${brl.format(k.resultado)}</div><div class="note">${margem === null ? 'sem receita no período' : 'margem de ' + pctFmt.format(margem)}</div></div>
+  </section>
+  <section class="grid-2">
+    <div class="card"><h2>MRR por plano</h2><div class="sub">Assinaturas ativas, sem cortesias</div>
+      ${partes.length ? `<div class="hbars">${partes.map(p => `<div class="hbar"><div class="row"><span><span class="dot" style="background:${p.cor}"></span>${esc(p.nome)}</span><b>${brl.format(p.valor)}</b></div><div class="track"><i style="width:${Math.round(p.valor/maxP*100)}%;background:${p.cor}"></i></div></div>`).join('')}</div>` : '<div class="empty">Sem assinaturas ativas.</div>'}
+    </div>
+    <div class="card"><h2>Como ler esses números</h2><div class="sub">Estimativas, não contabilidade</div>
+      <p style="margin:0;color:var(--ink-soft)">O custo de IA multiplica os créditos e minutos de vídeo usados pelo custo unitário da planilha. Os valores reais virão das faturas de Anthropic, AssemblyAI e AWS, e a receita real do Stripe.</p></div>
+  </section>
+  <h2 style="font-size:17px;margin:26px 0 12px">Transações</h2>
+  <div class="toolbar"><div class="chips" role="group" aria-label="Filtrar transações">${[['todos','Todas'],['pago','Pagas'],['pendente','Pendentes'],['falhou','Falharam']].map(([v,l]) => `<button class="chip-btn" data-action="fin-filtro" data-v="${v}" aria-pressed="${state.finFiltro === v}">${l}</button>`).join('')}</div></div>
+  <div id="fin-tabela"></div>`;
+}
+function tabelaTransacoes(){
+  const lista = state.transacoes.filter(t => state.finFiltro === 'todos' || t.status === state.finFiltro);
+  if(!lista.length) return `<div class="table-wrap"><div class="empty"><b>Nenhuma transação</b>Não há transações com esse status.</div></div>`;
+  return `<div class="table-wrap"><table><caption style="position:absolute;left:-999px">Transações</caption>
+    <thead><tr><th scope="col">Data</th><th scope="col">Usuário</th><th scope="col">Descrição</th><th scope="col" class="num">Valor</th><th scope="col">Status</th></tr></thead>
+    <tbody>${lista.map(t => { const u = state.usuarios.find(x => x.id === t.usuarioId); return `<tr><td class="small">${fmtData(t.data)}</td><td>${esc(u ? u.nome : '—')}</td><td>${esc(t.desc)}</td><td class="num">${brl.format(t.valor)}</td><td>${badgeTx(t.status)}</td></tr>`; }).join('')}</tbody></table></div>`;
+}
+
+/* ===================== roteamento ===================== */
+const ROTAS = {
+  'visao-geral': {titulo:'Visão geral', render:visaoGeral},
+  'usuarios':    {titulo:'Usuários',    render:usuariosView, depois:()=>{ document.getElementById('usr-tabela').innerHTML = tabelaUsuarios(); }},
+  'planos':      {titulo:'Planos',      render:planosView},
+  'financeiro':  {titulo:'Financeiro',  render:financeiroView, depois:()=>{ document.getElementById('fin-tabela').innerHTML = tabelaTransacoes(); }}
+};
+let rotaAtual = null;
+function navegar(foco = true){
+  const h = location.hash.slice(1), rota = ROTAS[h] ? h : 'visao-geral', def = ROTAS[rota];
+  const mudou = rota !== rotaAtual; rotaAtual = rota;
+  const main = document.getElementById('conteudo');
+  main.innerHTML = def.render(); def.depois && def.depois();
+  document.querySelectorAll('.nav a').forEach(a => a.dataset.rota === rota ? a.setAttribute('aria-current','page') : a.removeAttribute('aria-current'));
+  document.title = `${def.titulo} · Admin Master · Volucks IA`;
+  if(mudou && foco){ window.scrollTo(0,0); const h1 = main.querySelector('h1'); h1 && h1.focus({preventScroll:true}); }
+}
+window.addEventListener('hashchange', () => navegar(true));
+
+/* ===================== modal / toast ===================== */
+let modalAtivo = null;
+function abrirModal({titulo, corpo, rotuloOk='Salvar', onSubmit, sem_rodape=false}){
+  const opener = document.activeElement;
+  const ov = document.createElement('div'); ov.className = 'overlay';
+  ov.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-titulo">
+    <header><h2 id="m-titulo">${titulo}</h2><button type="button" class="icon-btn" data-close aria-label="Fechar">×</button></header>
+    <form novalidate><div class="modal-body">${corpo}</div>
+    <footer><button type="button" class="btn btn-secondary" data-close>Cancelar</button><button type="submit" class="btn btn-primary">${rotuloOk}</button></footer></form></div>`;
+  document.body.appendChild(ov);
+  const form = ov.querySelector('form');
+  const fechar = () => { ov.remove(); modalAtivo = null; opener && opener.focus && opener.focus(); };
+  ov.addEventListener('mousedown', e => { if(e.target === ov) fechar(); });
+  ov.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', fechar));
+  form.addEventListener('submit', e => { e.preventDefault(); const ok = onSubmit(form); if(ok !== false) fechar(); });
+  modalAtivo = {ov, fechar};
+  const primeiro = form.querySelector('input:not([type=hidden]):not([disabled]),select'); (primeiro || ov.querySelector('button')).focus();
+  return {form, fechar};
+}
+document.addEventListener('keydown', e => {
+  if(!modalAtivo) return;
+  if(e.key === 'Escape'){ modalAtivo.fechar(); return; }
+  if(e.key === 'Tab'){
+    const f = [...modalAtivo.ov.querySelectorAll('button,input,select,[href]')].filter(x => !x.disabled && x.offsetParent !== null);
+    if(!f.length) return; const a = f[0], z = f[f.length-1];
+    if(e.shiftKey && document.activeElement === a){ e.preventDefault(); z.focus(); } else if(!e.shiftKey && document.activeElement === z){ e.preventDefault(); a.focus(); }
+  }
+});
+function toast(msg){ const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.getElementById('toasts').appendChild(t); setTimeout(() => t.remove(), 3600); }
+function erro(form, nome, msg){
+  const el = form.querySelector(`[data-err="${nome}"]`), inp = form.elements[nome];
+  if(el) el.textContent = msg || ''; if(inp){ msg ? inp.setAttribute('aria-invalid','true') : inp.removeAttribute('aria-invalid'); }
+  return !msg;
+}
+
+/* ===================== ações: usuários ===================== */
+function novoUsuario(){
+  const ativos = state.planos.filter(p => p.ativo);
+  if(!ativos.length){ toast('Crie ou reative um plano antes de cadastrar usuários.'); return; }
+  abrirModal({titulo:'Novo usuário', rotuloOk:'Criar usuário', corpo:`
+    <div class="field"><label class="lbl" for="n-nome">Nome completo</label><input class="input" id="n-nome" name="nome" autocomplete="off"><div class="err" data-err="nome" role="alert"></div></div>
+    <div class="field"><label class="lbl" for="n-email">E-mail</label><input class="input" id="n-email" name="email" type="email" autocomplete="off"><div class="err" data-err="email" role="alert"></div></div>
+    <div class="field"><label class="lbl" for="n-plano">Plano</label><select class="select" id="n-plano" name="plano">${ativos.map(p => `<option value="${p.id}">${esc(p.nome)} — ${brl.format(p.preco)}/mês · ${num.format(p.creditos)} créditos</option>`).join('')}</select></div>
+    <label class="switch"><input type="checkbox" name="cortesia"><span class="track"></span><span>Cortesia (sem cobrança)</span></label>
+    <div class="hint" style="margin-top:-8px">Sem cortesia, o sistema gera uma cobrança pendente da assinatura.</div>`,
+    onSubmit: form => {
+      const nome = form.elements.nome.value.trim(), email = form.elements.email.value.trim();
+      let ok = erro(form,'nome', nome.length < 2 ? 'Informe o nome do usuário.' : '');
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      ok = erro(form,'email', !email ? 'Informe o e-mail.' : !emailOk ? 'Esse e-mail não parece válido.' : state.usuarios.some(u => u.email.toLowerCase() === email.toLowerCase()) ? 'Já existe um usuário com esse e-mail.' : '') && ok;
+      if(!ok){ form.querySelector('[aria-invalid="true"]').focus(); return false; }
+      const plano = planoDe(form.elements.plano.value), cortesia = form.elements.cortesia.checked, id = Math.max(0, ...state.usuarios.map(u => u.id)) + 1;
+      state.usuarios.push({id, nome, email, planoId:plano.id, status:'ativo', cortesia, creditosUsados:0, minVideoUsados:0, criadoEm:new Date()});
+      if(!cortesia) state.transacoes.unshift({id:Math.max(0,...state.transacoes.map(t=>t.id))+1, data:new Date(), usuarioId:id, desc:`Assinatura ${plano.nome}`, valor:plano.preco, status:'pendente'});
+      navegar(false); toast(`Usuário ${nome} criado no plano ${plano.nome}.`);
+    }});
+}
+function alterarPlano(id){
+  const u = state.usuarios.find(x => x.id === id); if(!u) return;
+  const disp = state.planos.filter(p => p.ativo || p.id === u.planoId);
+  abrirModal({titulo:`Alterar plano de ${esc(u.nome)}`, rotuloOk:'Aplicar plano', corpo:`
+    <div class="radio-list" role="radiogroup" aria-label="Planos disponíveis">${disp.map(p => `<label class="radio"><input type="radio" name="plano" value="${p.id}" ${p.id === u.planoId ? 'checked' : ''}><span><b>${esc(p.nome)} · ${brl.format(p.preco)}/mês</b><small>${num.format(p.creditos)} créditos${p.video ? ` · ${p.minVideo} min de vídeo` : ''} · ${limitePlataformas(p.maxPlataformas)}</small></span></label>`).join('')}</div>
+    <div class="hint">O novo plano passa a valer imediatamente. O consumo já feito no ciclo é mantido.</div>`,
+    onSubmit: form => {
+      const novo = form.elements.plano.value; if(novo === u.planoId){ return true; }
+      u.planoId = novo; navegar(false); toast(`${u.nome} agora está no plano ${planoDe(novo).nome}.`);
+    }});
+}
+
+/* ===================== ações: planos ===================== */
+function formPlano(p){
+  const novo = !p; p = p || {nome:'', preco:0, creditos:0, minVideo:0, teleprompter:false, bancoImagens:false, video:false, maxPlataformas:1};
+  const n = novo ? 0 : state.usuarios.filter(u => u.planoId === p.id && u.status !== 'cancelado').length;
+  const chk = v => v ? 'checked' : '';
+  const {form} = abrirModal({titulo: novo ? 'Novo plano' : `Editar plano ${esc(p.nome)}`, rotuloOk: novo ? 'Criar plano' : 'Salvar alterações', corpo:`
+    ${n ? `<div class="warnbox">${n} usuário${n > 1 ? 's estão' : ' está'} neste plano. As alterações valem para ${n > 1 ? 'todos' : 'ele'}.</div>` : ''}
+    <div class="field"><label class="lbl" for="p-nome">Nome do plano</label><input class="input" id="p-nome" name="nome" value="${esc(p.nome)}" autocomplete="off"><div class="err" data-err="nome" role="alert"></div></div>
+    <div class="two">
+      <div class="field"><label class="lbl" for="p-preco">Preço mensal (R$)</label><input class="input" id="p-preco" name="preco" type="number" min="0" step="0.01" inputmode="decimal" value="${p.preco}"><div class="err" data-err="preco" role="alert"></div></div>
+      <div class="field"><label class="lbl" for="p-cred">Créditos por mês</label><input class="input" id="p-cred" name="creditos" type="number" min="0" step="1" inputmode="numeric" value="${p.creditos}"><div class="err" data-err="creditos" role="alert"></div></div>
+    </div>
+    <div class="two">
+      <div class="field"><label class="lbl" for="p-plat">Redes ao mesmo tempo</label><select class="select" id="p-plat" name="maxPlataformas">${[[1,'1 rede'],[2,'Até 2 redes'],[3,'Até 3 redes'],[4,'Até 4 redes'],[0,'Ilimitadas']].map(([v,l]) => `<option value="${v}" ${p.maxPlataformas === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="field"><label class="lbl" for="p-min">Minutos de vídeo por mês</label><input class="input" id="p-min" name="minVideo" type="number" min="0" step="1" inputmode="numeric" value="${p.minVideo}"><div class="err" data-err="minVideo" role="alert"></div></div>
+    </div>
+    <div class="field"><span class="lbl" style="display:block;font-size:13px;font-weight:500;color:var(--ink-soft);margin-bottom:6px">Recursos liberados</span>
+      <label class="switch"><input type="checkbox" name="teleprompter" ${chk(p.teleprompter)}><span class="track"></span><span>Teleprompter</span></label>
+      <label class="switch"><input type="checkbox" name="bancoImagens" ${chk(p.bancoImagens)}><span class="track"></span><span>Banco de imagens</span></label>
+      <label class="switch"><input type="checkbox" name="video" ${chk(p.video)}><span class="track"></span><span>Editor de vídeo com IA</span></label></div>
+    <div class="preview" id="p-prev" aria-live="polite"></div>`,
+    onSubmit: f => {
+      const nome = f.elements.nome.value.trim(), preco = parseFloat(f.elements.preco.value), cred = parseInt(f.elements.creditos.value,10), vid = f.elements.video.checked;
+      const min = vid ? parseInt(f.elements.minVideo.value,10) : 0;
+      let ok = erro(f,'nome', nome.length < 2 ? 'Dê um nome ao plano.' : state.planos.some(x => x.id !== p.id && x.nome.toLowerCase() === nome.toLowerCase()) ? 'Já existe um plano com esse nome.' : '');
+      ok = erro(f,'preco', !(preco >= 0) ? 'Informe um preço igual ou maior que zero.' : '') && ok;
+      ok = erro(f,'creditos', !(cred >= 0) ? 'Informe um número de créditos (0 ou mais).' : '') && ok;
+      ok = erro(f,'minVideo', vid && !(min >= 0) ? 'Informe os minutos de vídeo (0 ou mais).' : '') && ok;
+      if(!ok){ f.querySelector('[aria-invalid="true"]').focus(); return false; }
+      const dados = {nome, preco, creditos:cred, minVideo:min, teleprompter:f.elements.teleprompter.checked, bancoImagens:f.elements.bancoImagens.checked, video:vid, maxPlataformas:parseInt(f.elements.maxPlataformas.value,10)};
+      if(novo){
+        let id = slug(nome) || 'plano', base = id, i = 2; while(state.planos.some(x => x.id === id)) id = `${base}-${i++}`;
+        state.planos.push({id, ativo:true, ...dados}); toast(`Plano ${nome} criado.`);
+      } else { Object.assign(p, dados); toast(`Plano ${nome} atualizado.`); }
+      navegar(false);
+    }});
+  const atualizar = () => {
+    const vid = form.elements.video.checked; form.elements.minVideo.disabled = !vid; if(!vid) form.elements.minVideo.value = 0;
+    const preco = parseFloat(form.elements.preco.value) || 0, cred = parseInt(form.elements.creditos.value,10) || 0, min = vid ? (parseInt(form.elements.minVideo.value,10) || 0) : 0;
+    const custo = cred * CUSTO_CREDITO + min * CUSTO_MIN_VIDEO, m = preco > 0 ? (preco - custo) / preco : null;
+    document.getElementById('p-prev').innerHTML = `Custo máximo por usuário: <b>${brl.format(custo)}</b> · Margem se o plano for 100% usado: ${m === null ? '<b>—</b>' : `<b class="${m < 0 ? 'bad' : 'good'}">${pctFmt.format(m)}</b>`}`;
+  };
+  form.addEventListener('input', atualizar); form.addEventListener('change', atualizar); atualizar();
+}
+function arquivarPlano(id){
+  const p = planoDe(id); if(!p) return;
+  if(p.ativo && state.planos.filter(x => x.ativo).length === 1){ toast('Mantenha pelo menos um plano ativo.'); return; }
+  p.ativo = !p.ativo; navegar(false); toast(p.ativo ? `Plano ${p.nome} reativado.` : `Plano ${p.nome} arquivado. Não aparece mais para novos cadastros.`);
+}
+
+/* ===================== financeiro: exportar ===================== */
+function exportarCSV(){
+  const linhas = [['Data','Usuário','E-mail','Descrição','Valor (R$)','Status']];
+  state.transacoes.filter(t => state.finFiltro === 'todos' || t.status === state.finFiltro).forEach(t => {
+    const u = state.usuarios.find(x => x.id === t.usuarioId);
+    linhas.push([t.data.toLocaleDateString('pt-BR'), u ? u.nome : '', u ? u.email : '', t.desc, t.valor.toFixed(2).replace('.',','), t.status]);
+  });
+  const csv = '﻿' + linhas.map(l => l.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+  const a = document.createElement('a'); a.href = url; a.download = `transacoes-volucks-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 500);
+  toast('CSV exportado.');
+}
+
+/* ===================== eventos ===================== */
+const ACOES = {
+  'novo-usuario': () => novoUsuario(),
+  'alterar-plano': el => alterarPlano(Number(el.dataset.id)),
+  'limpar-filtros': () => { state.filtro = {busca:'', plano:'todos', status:'todos'}; navegar(false); },
+  'novo-plano': () => formPlano(null),
+  'editar-plano': el => formPlano(planoDe(el.dataset.id)),
+  'arquivar-plano': el => arquivarPlano(el.dataset.id),
+  'fin-filtro': el => { state.finFiltro = el.dataset.v; navegar(false); },
+  'exportar-csv': () => exportarCSV()
+};
+document.addEventListener('click', e => { const el = e.target.closest('[data-action]'); if(el && ACOES[el.dataset.action]) ACOES[el.dataset.action](el); });
+document.addEventListener('input', e => {
+  if(e.target.id === 'f-busca'){ state.filtro.busca = e.target.value; document.getElementById('usr-tabela').innerHTML = tabelaUsuarios(); }
+});
+document.addEventListener('change', e => {
+  if(e.target.id === 'f-plano'){ state.filtro.plano = e.target.value; document.getElementById('usr-tabela').innerHTML = tabelaUsuarios(); }
+  if(e.target.id === 'f-status'){ state.filtro.status = e.target.value; document.getElementById('usr-tabela').innerHTML = tabelaUsuarios(); }
+});
+
+navegar(false);
+</script>
+</body>
+</html>
